@@ -13,7 +13,7 @@ import re
 import shutil
 import rich
 import rich.status
-from patch_boot import patch_boot
+from patch_boot import patch
 
 def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
@@ -382,7 +382,7 @@ SHA1={sha1}''')
     else:
         magiskboot('hexpatch kernel 77616E745F696E697472616D667300 736B69705F696E697472616D667300') #尝试修补kernel-关闭rootfs
     
-    patch_boot()
+    patch()
     
     #打包boot
     console.log('打包boot')
