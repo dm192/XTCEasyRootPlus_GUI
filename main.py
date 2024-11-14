@@ -142,14 +142,17 @@ while True:
             console.log('下载文件')
             status.update('下载文件')
             tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/{model}.zip',f'tmp/{model}.zip')
-            if magisk == '25200':
-                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
-            elif magisk == '25210':
-                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
+            
             console.log('解压文件')
             status.update('解压文件')
             tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
-            status.stop()
+        
+        if magisk == '25200':
+            tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
+        elif magisk == '25210':
+            tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
+        
+        status.stop()
         
         def download_all_files():
             if info['version_of_android'] == '7.1.1':
@@ -506,7 +509,7 @@ while True:
             input('请打开手表上的"SystemPlus"APP,依次点击"激活SystemPlus"和"激活核心破解"按钮,完成后按下回车继续')
             console.rule('',characters='=')
 
-            adb.push('/bin/systemplus.sh','/sdcard/')
+            adb.push('bin/systemplus.sh','/sdcard/')
             while True:
                 status.update('检查SystemPlus状态')
                 status.start()
@@ -520,7 +523,7 @@ while True:
             adb.shell('rm -rf /sdcard/systemplus.sh')
             console.log('SystemPlus激活成功!')
 
-            adb.push('/bin/toolkit.sh','/sdcard/')
+            adb.push('bin/toolkit.sh','/sdcard/')
             while True:
                 status.update('检查核心破解状态')
                 status.start()
@@ -536,7 +539,7 @@ while True:
 
             console.log('获取uid')
             status.update('获取uid')
-            chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="')[0].split('=')[1][-5:]
+            chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="')[0].replace('\n','').replace('\r','').split('=')[1][-5:]
             console.log('更改文件所有者')
             status.update('更改文件所有者')
             adb.shell(f'"su -c chown {chown} /data/user_de/0/com.solohsu.android.edxp.manager/conf/enabled_modules.list"')
