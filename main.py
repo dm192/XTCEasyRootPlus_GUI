@@ -370,7 +370,7 @@ while True:
             
             console.log('开始修补boot分区')
             status.update('修补boot分区') 
-            tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.zip','tmp/',console)
+            tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.apk','tmp/',console)
             
             console.log('修补完毕')
             if model == 'Z7A' or model == 'Z6_DFB':
