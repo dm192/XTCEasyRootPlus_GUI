@@ -485,21 +485,21 @@ class FASTBOOT():
     def __init__(self,path):
         self.path = path
     def fastboot(self,args):
-        return run_wait(f'{self.path} {args}')[0]
+        return run_wait(f'{self.path} {args}')
     def wait_for_fastboot(self):
         while True:
-            if 'fastboot' in self.fastboot('devices'):
+            if 'fastboot' in self.fastboot('devices')[0]:
                 break
             sleep(0.5)
     def flash(self,part,img):
-        output = self.fastboot(f'flash {part} {img}')
-        if 'finished' in output:
+        output,err = self.fastboot(f'flash {part} {img}')
+        if 'Finished' in output:
             return 'success'
         else:
             return output
     def erase(self,part):
-        output = self.fastboot(f'erase {part}')
-        if 'finished' in output:
+        output,err = self.fastboot(f'erase {part}')
+        if 'Finished' in output:
             return 'success'
         else:
             return output

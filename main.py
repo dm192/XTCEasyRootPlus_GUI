@@ -537,6 +537,12 @@ while True:
             adb.shell('rm -rf /sdcard/toolkit.sh')
             console.log('核心破解激活成功!')
 
+            console.log('重启设备')
+            status.update('等待重新连接')
+            adb.adb('reboot')
+            adb.wait_for_connect()
+            adb.wait_for_complete()
+
             console.log('获取uid')
             status.update('获取uid')
             chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="')[0].replace('\n','').replace('\r','').split('=')[1][-5:]
