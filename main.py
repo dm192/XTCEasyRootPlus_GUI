@@ -16,7 +16,7 @@ from rich.table import Column,Table
 import shutil
 import threading
 
-version = [0,1,'b']
+version = [0,2,'b']
 
 os.system(f'title XTCEasyRootPlus v{version[0]}.{version[1]}')
 console = Console()
