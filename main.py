@@ -562,7 +562,7 @@ while True:
 
             console.log('安装软件')
             status.update('安装软件')
-            for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk']:
+            for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk','settings.apk']:
                 status.update(f'安装{i}')
                 tools.iferror(adb.install(f'tmp/{i}'),f'安装{i}')
             
