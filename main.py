@@ -394,10 +394,9 @@ while True:
                 os.remove('tmp/boot.img')
                 shutil.copy(f'bin/eboot.img','tmp/boot.img')
                 tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入空boot',status,mode='exit9008',qt=qt)
-            tools.iferror(console.log('退出9008模式'),'退出9008模式',status,mode='stop')
+            tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
             status.update('退出9008')
-            qt.exit9008()
-            console.log('等待重新连接')
+            console.log('退出9008模式')
             status.update('等待重新连接') 
             fastboot = tools.FASTBOOT('bin/fastboot.exe')
             if not model in ('Z7A','Z6_DFB'):
