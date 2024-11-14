@@ -12,9 +12,9 @@
 
 ## 截图
 
-[主界面](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_1.png)
+![主界面](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_1.png)
 
-[Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_2.png)
+![Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_2.png)
 
 ## To-Do
 
