@@ -352,7 +352,7 @@ def patch_boot(
 KEEPFORCEENCRYPT={options['keep_force_encrypt']}
 RECOVERYMODE={options['recovery_mode']}
 SHA1={sha1}''')
-        elif magisk_vercode == '25200':
+        elif magisk_vercode == '25200' or magisk_vercode == '25210':
             f.write(f'''KEEPVERITY={options['keep_verity']}
 KEEPFORCEENCRYPT={options['keep_force_encrypt']}
 RECOVERYMODE={options['recovery_mode']}
@@ -364,7 +364,7 @@ SHA1={sha1}''')
         shutil.copy('bin/711_adbd','./')
         tmpfile.append('711_adbd')
         magiskboot(r'cpio ramdisk.cpio "add 750 init magiskinit" "patch" "backup ramdisk.cpio.orig" "mkdir 000 .backup" "add 000 .backup/.magisk config" "add 0750 sbin/adbd 711_adbd"')
-    elif magisk_vercode == '25200':
+    elif magisk_vercode == '25200' or magisk_vercode == '25210':
         shutil.copy('bin/810_adbd','./')
         tmpfile.append('810_adbd')
         magiskboot(r'cpio ramdisk.cpio "add 0750 init magiskinit" "mkdir 0750 overlay.d" "mkdir 0750 overlay.d/sbin" "add 0644 overlay.d/sbin/magisk32.xz magisk32.xz" "patch" "backup ramdisk.cpio.orig" "mkdir 000 .backup" "add 000 .backup/.magisk config" "add 0750 sbin/adbd 810_adbd"')

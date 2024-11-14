@@ -126,10 +126,26 @@ while True:
 
         model = tools.xtc_models[info['innermodel']]
 
+        choice = noneprompt.ListPrompt(
+            '请选择想要的Magisk版本',
+            choices=[
+                noneprompt.Choice('1.Magisk25200'),
+                noneprompt.Choice('2.MagiskDelta25210')
+            ],
+        ).prompt()
+        if choice.name == '1.Magisk25200':
+            magisk = '25200'
+        elif choice.name == '2.MagiskDelta25210':
+            magisk = '25210'
+
         if not os.path.exists(f'data/{model}'):
             console.log('下载文件')
             status.update('下载文件')
             tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/{model}.zip',f'tmp/{model}.zip')
+            if magisk == '25200':
+                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
+            elif magisk == '25210':
+                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
             console.log('解压文件')
             status.update('解压文件')
             tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
@@ -161,6 +177,7 @@ while True:
                 mode = 'boot'
             elif choice.name == '2.recovery方案(如果你没有用过超级恢复/降级选这个)':
                 mode = 'recovery'
+        
 
         while True:
             confirm = noneprompt.ConfirmPrompt('你是否已经将SIM卡拔出?',default_choice=False).prompt()
@@ -175,13 +192,13 @@ while True:
             else:
                 print('请将SIM卡拔出!')
         
-        while True:
-            output,err = adb.shell('getprop gsm.xtcplmn.plmnstatus')
-            if not '没有服务' in output and not '只能拨打紧急电话' in output:
-                status.start()
-                break
+        output,err = adb.shell('getprop gsm.xtcplmn.plmnstatus')
+        if '没有服务' in output:
             status.stop()
-            input('你没有拔卡!请拔卡后按回车键再次检测')
+            input('手表状态:无服务,请确定您已拔卡!如果不想喜提「手表验证异常」请先拔卡,如已拔卡无视此提示')
+        elif '只能拨打紧急电话' in output:
+            status.stop()
+            input('您似乎没有拔卡!如果不想喜提「手表验证异常」请先拔卡,如已拔卡无视此提示')
 
         if info['version_of_android'] == '7.1.1':
             status.update('重启设备至9008模式')
@@ -353,7 +370,7 @@ while True:
             
             console.log('开始修补boot分区')
             status.update('修补boot分区') 
-            tools.patch_boot('bin/magiskboot.exe','tmp/boot.img','bin/20400.zip','tmp/',console)
+            tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.zip','tmp/',console)
             
             console.log('修补完毕')
             if model == 'Z7A' or model == 'Z6_DFB':
@@ -396,7 +413,7 @@ while True:
                     fastboot.wait_for_fastboot()
                 status.update('刷入userdata') 
                 console.log('刷入userdata')
-                tools.iferror(fastboot.flash('userdata',f'data/{model}/userdata.img'),'刷入userdata',status)
+                tools.iferror(fastboot.flash('userdata','tmp/userdata.img'),'刷入userdata',status)
                 status.update('刷入misc') 
                 console.log('刷入misc')
                 with open('tmp/misc.bin','w') as f:
