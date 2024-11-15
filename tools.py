@@ -19,16 +19,17 @@ def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
         f.write(f'>>>{args}\n')
     p = subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    p.wait()
+    write = ''
+    while p.poll() is None:
+        p.wait(5)
+        with open('log.log','a') as f:
+            write = p.stdout.read().decode().replace(write,'')
+            f.write(f)
     stdout = p.stdout.read().decode()
     stderr = p.stderr.read().decode()
     if returncode:
-        with open('log.log','a') as f:
-            f.write(f'returncode {p.returncode}\n\n')
         return p.returncode
     else:
-        with open('log.log','a') as f:
-            f.write(f'{stdout}\n{stderr}\n')
         return stdout,stderr
 
 def clear_line():
@@ -188,7 +189,7 @@ class QT():
         else:
             return 'success'
 
-    def reboot2edl(self,adb):
+    def reboot2edl(self,adb: ADB):
         adb.adb('reboot edl')
         self.intosahara()
 
