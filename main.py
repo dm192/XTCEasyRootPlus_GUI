@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.table import Column,Table
 import shutil
 import threading
+from tkinter import filedialog
 
 version = [0,3,'b']
 
@@ -53,7 +54,7 @@ try: #尝试获取版本文件
         console.log(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
         console.log('开始下载新版本......')
         status.update('下载新版本')
-        tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/XTCEasyRootPlusInstaller.exe','tmp/XTCEasyRootPlusInstaller.exe')
+        tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/XTCEasyRootPlusInstaller.exe','tmp/XTCEasyRootPlusInstaller.exe')
         subprocess.Popen('tmp/XTCEasyRootPlusInstaller.exe')
         sys.exit()
 except requests.ConnectionError:   #捕捉下载失败错误
@@ -79,6 +80,8 @@ while True:
     #清屏并停止状态指示
     status.stop()
     os.system('cls')
+
+    adb = tools.ADB('bin/adb.exe')
 
     #主菜单
     tools.print_logo(version)
@@ -107,7 +110,6 @@ while True:
             print('按下回车退出')
             tools.exit_after_enter()
         input('请拔出手表上的SIM卡,拔出后按下回车下一步')
-        adb = tools.ADB('bin/adb.exe')
         print('\r',end='')
         status.update("等待设备连接")
         status.start()
@@ -161,9 +163,9 @@ while True:
         
         if info['version_of_android'] == '8.1.0':
             if magisk == '25200':
-                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
+                tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/1userdata.img','tmp/userdata.img')
             elif magisk == '25210':
-                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
+                tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/2userdata.img','tmp/userdata.img')
         
         status.stop()
         
@@ -176,7 +178,7 @@ while True:
                 filelist = ['appstore.apk','notice.apk','wxzf.apk','wcp2.apk','datacenter.apk','xws.apk','launcher.apk','11605.apk','filemanager.apk','settings.apk']
                 for i in filelist:
                     tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/apps/{i}',f'tmp/{i}',progress=False)
-                tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip')
+                tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip',progress=False)
 
         download_thread = threading.Thread(target=download_all_files)
         download_thread.start()
@@ -208,7 +210,7 @@ while True:
             else:
                 print('请将SIM卡拔出!')
         
-        output,err = adb.shell('getprop gsm.xtcplmn.plmnstatus')
+        output = adb.shell('getprop gsm.xtcplmn.plmnstatus')
         if '没有服务' in output:
             status.stop()
             input('手表状态:无服务,请确定您已拔卡!如果不想喜提「手表验证异常」请先拔卡,如已拔卡无视此提示')
@@ -527,7 +529,7 @@ while True:
                 status.update('检查SystemPlus状态')
                 status.start()
                 console.log('检查SystemPlus状态')
-                output,err = adb.shell('sh /sdcard/systemplus.sh')
+                output = adb.shell('sh /sdcard/systemplus.sh')
                 if not '1' in output:
                     break
                 else:
@@ -541,7 +543,7 @@ while True:
                 status.update('检查核心破解状态')
                 status.start()
                 console.log('检查核心破解状态')
-                output,err = adb.shell('sh /sdcard/toolkit.sh')
+                output = adb.shell('sh /sdcard/toolkit.sh')
                 if not '1' in output:
                     break
                 else:
@@ -558,7 +560,7 @@ while True:
 
             console.log('获取uid')
             status.update('获取uid')
-            chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="')[0].replace('\n','').replace('\r','').split('=')[1][-5:]
+            chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="').replace('\n','').replace('\r','').split('=')[1][-5:]
             console.log('更改文件所有者')
             status.update('更改文件所有者')
             adb.shell(f'"su -c chown {chown} /data/user_de/0/com.solohsu.android.edxp.manager/conf/enabled_modules.list"')
@@ -600,8 +602,6 @@ while True:
             input('恭喜你,Root成功!按回车返回主界面')
 
     elif choice.name == '2.超级恢复(救砖/降级/恢复原版系统)':
-        adb = tools.ADB('bin/adb.exe')
-        
         status.update('获取超级恢复列表')
         status.start()
         console.log('获取超级恢复列表')
@@ -638,7 +638,7 @@ while True:
         if not os.path.exists(f'data/superrecovery/{model}_{sr_version}/'):
             status.stop()
             console.log('下载文件')
-            # tools.download_file(superrecovery[model][sr_version],'tmp/superrecovery.zip')
+            tools.download_file(superrecovery[model][sr_version],'tmp/superrecovery.zip')
             console.log('解压文件')
             status.update('解压文件')
             status.start()
@@ -682,21 +682,171 @@ while True:
                 sendxml_list.append(i)
             elif i[:10] == 'rawprogram' and i[-3:] == 'xml':
                 sendxml_list.append(i)
-        if len(sendxml_list) == 2:
-            sendxml_list = ['rawprogram0.xml']
-            sendxml = 'rawprogram0.xml'
-        else:
-            for i in sendxml_list:
-                sendxml = sendxml + i + ','
+        
+        for i in sendxml_list:
+            sendxml = sendxml + i + ','
+        sendxml = sendxml[:-1]
+
         
 
         console.log('开始超恢')
         console.log('提示: 此过程耗时较长,可能需要1-2分钟,请耐心等待')
-        status.update('超级恢复')
-        tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --sendxml={sendxml} --search_path=data/superrecovery/{model}_{sr_version} --noprompt --showpercentagecomplete --memoryname=eMMC --setactivepartition=0 --reset'),'超级恢复',status,mode='exit9008',qt=qt)
+        status.update('超级恢复中')
+        tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+        sleep(0.5)
+        tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+        sleep(0.5)
+        tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
 
         status.stop()
         input('超恢成功!按下回车键回到主界面')
+
+    elif choice.name == '3.工具箱':
+        while True:
+            os.system('cls')
+            tools.print_logo(version)
+            print(f'\nXTCEasyRootPlus [blue]v{version[0]}.{version[1]}[/blue]\n')
+            choice = noneprompt.ListPrompt(
+                '请选择功能',
+                [
+                    noneprompt.Choice('q.退出'),
+                    noneprompt.Choice('1.安装本地应用安装包(APK)'),
+                    noneprompt.Choice('2.安装模块'),
+                    noneprompt.Choice('3.安装XTCPatch'),
+                    noneprompt.Choice('4.安装CaremeOS Pro'),
+                    noneprompt.Choice('5.开启充电可用'),
+                ],
+                default_select=2
+            ).prompt()
+
+            if choice.name[0] == 'q':
+                break
+
+            if choice.name[0] == '1':
+                apk = filedialog.askopenfilenames(title='请选择安装包',filetypes=[('安卓应用程序安装包','*.apk')])
+                if not adb.is_connect():
+                    status.update('等待连接')
+                    console.log('等待连接')
+                    status.start()
+                    adb.wait_for_connect()
+                    adb.wait_for_complete()
+                status.update('开始安装')
+                status.start()
+                console.log('开始安装')
+                for i in apk:
+                    console.log(f'安装{i.split('/')[-1]}')
+                    output = adb.install(i)
+                    if output == 'success':
+                        console.log('安装成功!')
+                    else:
+                        tools.print_error(f'安装{i.split('/')[-1]}失败',output)
+                input('安装完毕!按回车返回主界面')
+
+            elif choice.name[0] == '2':
+                module = filedialog.askopenfilenames(title='请选择模块',filetypes=[('模块','*.zip')])
+                if not adb.is_connect():
+                    status.update('等待连接')
+                    console.log('等待连接')
+                    status.start()
+                    adb.wait_for_connect()
+                    adb.wait_for_complete()
+                status.update('开始安装')
+                status.start()
+                console.log('开始安装')
+                android_version = adb.get_version_of_android()
+                for i in apk:
+                    console.log(f'安装{i.split('/')[-1]}')
+                    if android_version == '7.1.1':
+                        output = adb.install_module(i)
+                        if output == 'success':
+                            console.log('安装成功!')
+                        else:
+                            tools.print_error(f'安装{i.split('/')[-1]}失败',output)
+                    else:
+                        adb.push(i,'/sdcard/temp_module.zip')
+                        adb.shell('su -c magisk --install-module /sdcard/temp_module.zip')
+                        adb.shell('rm -rf /sdcard/temp_module.zip')
+                input('安装完毕!按回车返回主界面')
+
+            elif choice.name[0] == '3':
+                if not adb.is_connect():
+                    status.update('等待连接')
+                    console.log('等待连接')
+                    status.start()
+                    adb.wait_for_connect()
+                    adb.wait_for_complete()
+                status.update('获取安卓版本')
+                status.start()
+                console.log('获取安卓版本')
+                android_version = adb.get_version_of_android()
+                model = adb.get_model()
+
+                if 'XTC' in model:
+                    if android_version == '7.1.1':
+                        status.update('开始安装')
+                        status.start()
+                        console.log('开始安装')
+                        output = adb.install_module('bin/xtcpatch2100.zip')
+                        if output == 'success':
+                            console.log('安装成功!')
+                        else:
+                            tools.print_error('安装XTCPatch失败',output)
+                    elif android_version == '8.1.0':
+                        status.update('下载文件')
+                        console.log('开始下载文件')
+                        model = tools.xtc_models[adb.get_innermodel()]
+                        status.stop()
+                        tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip')
+                        status.update('开始安装')
+                        status.start()
+                        console.log('开始安装')
+                        adb.push('tmp/xtcpatch.zip','/sdcard/xtcpatch.zip')
+                        adb.shell('su -c magisk --install-module /sdcard/xtcpatch.zip')
+                        adb.shell('rm -rf /sdcard/xtcpatch.zip')
+                        console.log('安装成功!')
+                    input('安装完毕!按回车回到工具箱界面')
+                else:
+                    input('你貌似不是小天才设备!按回车回到工具箱界面')
+
+            elif choice.name[0] == '4':
+                if not adb.is_connect():
+                    status.update('等待连接')
+                    console.log('等待连接')
+                    status.start()
+                    adb.wait_for_connect()
+                    adb.wait_for_complete()
+                status.update('获取安卓版本')
+                status.start()
+                console.log('获取安卓版本')
+                android_version = adb.get_version_of_android()
+                model = adb.get_model()
+
+                if 'XTC' in model:
+                    if android_version == '8.1.0':
+                        console.log('开始下载文件')
+                        status.stop()
+                        tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/caremeospro.zip','tmp/caremeospro.zip')
+                        console.log('开始安装')
+                        status.update('安装CaremeOSPro')
+                        status.start()
+                        adb.push('tmp/caremeospro.zip','/sdcard/caremeospro.zip')
+                        adb.shell('su -c magisk --install-module /sdcard/caremeospro.zip')
+                        adb.shell('rm -rf /sdcard/caremeospro.zip')
+                        console.log('安装成功!')
+                        status.stop()
+                        input('安装完毕!按回车回到工具箱界面')
+                    else:
+                        input('你的机型不支持CaremeOSPro!按回车回到工具箱界面')
+                else:
+                    input('你貌似不是小天才设备!按回车回到工具箱界面')
+            
+            elif choice.name[0] == '5':
+                output = adb.shell('setprop persist.sys.charge.usable true')
+                console.log('开启成功!')
+                input('按回车回到工具箱界面')
+
+
+
 
     elif choice.name == '4.关于':
         os.system('cls')

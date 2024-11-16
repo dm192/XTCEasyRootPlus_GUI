@@ -2,7 +2,7 @@
 
 一个使用Python制作的小天才电话手表一键Root程序
 
-### 警告: 当前本项目处于Beta阶段,只有711机型boot方案得到过验证,711机型recovery方案和810机型暂未经过验证;超级恢复功能同样未经过验证
+### 警告: 当前本项目处于Beta阶段,810机型暂未经过验证
 
 本项目逻辑基本上参照XTCEasyRoot制作,相比XTCEasyRoot,本项目拥有更阳间的编程语言,更好看的Ui,更简化的逻辑
 
@@ -12,9 +12,11 @@
 
 ## 截图
 
-![主界面](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_1.png)
+![主界面](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/MENU.png)
 
-![Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/ScreenShot_2.png)
+![Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/Root.apng)
+
+![超级恢复](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/SuperRecovery.apng)
 
 ## To-Do
 
@@ -22,5 +24,5 @@
 - [x] 为810机型Root
 - [ ] 为444机型Root
 - [x] 内置超级恢复功能
-- [ ] 内置工具箱
+- [x] 内置工具箱
 - [ ] GUI(这个不一定会做)

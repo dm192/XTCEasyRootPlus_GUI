@@ -18,19 +18,22 @@ from patch_boot import patch
 def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
         f.write(f'>>>{args}\n')
-    p = subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    write = ''
-    while p.poll() is None:
-        p.wait(5)
-        with open('log.log','a') as f:
-            write = p.stdout.read().decode().replace(write,'')
-            f.write(f)
-    stdout = p.stdout.read().decode()
-    stderr = p.stderr.read().decode()
+    p = subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=False)
     if returncode:
+        with open('log.log','a') as f:
+            f.write(f'return {p.returncode}')
         return p.returncode
     else:
-        return stdout,stderr
+        try:
+            stdout = p.stdout.decode()
+            with open('log.log','a') as f:
+                f.write(f'{p.stdout}\n\n')
+        except UnicodeDecodeError:
+            stdout = p.stdout
+            with open('log.log','ab') as f:
+                f.write(f'{p.stdout}\n\n')
+        
+        return stdout
 
 def clear_line():
     print('\r',end='')
@@ -97,7 +100,7 @@ class ADB():
     def adb(self,input):
         return run_wait(f'{self.path} {input}')
     def is_connect(self):
-        output,err = self.adb('devices')
+        output = self.adb('devices')
         return '\tdevice' in output
     def wait_for_connect(self,sleep_time=0.5):
         while True:
@@ -105,13 +108,13 @@ class ADB():
                 break
             sleep(sleep_time)
     def get_innermodel(self):
-        return self.adb('shell getprop ro.product.innermodel')[0].replace('\n','').replace('\r','')
+        return self.adb('shell getprop ro.product.innermodel').replace('\n','').replace('\r','')
     def get_model(self):
-        return self.adb('shell getprop ro.product.model')[0].replace('\n','').replace('\r','')
+        return self.adb('shell getprop ro.product.model').replace('\n','').replace('\r','')
     def get_version_of_android(self):
-        return self.adb('shell getprop ro.build.version.release')[0].replace('\n','').replace('\r','')
+        return self.adb('shell getprop ro.build.version.release').replace('\n','').replace('\r','')
     def get_version_of_system(self):
-        return self.adb('shell getprop ro.product.current.softversion')[0].replace('\n','').replace('\r','')
+        return self.adb('shell getprop ro.product.current.softversion').replace('\n','').replace('\r','')
     def get_info(self):
         output = {}
         output['innermodel'] = self.get_innermodel()
@@ -120,16 +123,16 @@ class ADB():
         output['version_of_system'] = self.get_version_of_system()
         return output
     def get_plmnstatus(self):
-        return self.adb('shell getprop gsm.xtcplmn.plmnstatus')[0]
+        return self.adb('shell getprop gsm.xtcplmn.plmnstatus')
     def install(self,path: str,args=['r','t','d']):
         argsstr = ''
         for i in args:
             argsstr = argsstr + '-' + i + ' '
-        output,err = self.adb(f'install {argsstr}{path}')
+        output = self.adb(f'install {argsstr}{path}')
         if 'Success' in output:
             return 'success'
         else:
-            return err
+            return output
     def shell(self,shell):
         return self.adb(f'shell {shell}')
     def xtc_is_v3(self):
@@ -146,12 +149,12 @@ class ADB():
         self.shell('rm -rf /sdcard/temp_module.zip')
     def wait_for_complete(self,sleep_time=0.5):
         while True:
-            output,err = self.shell('getprop sys.boot_completed')
+            output = self.shell('getprop sys.boot_completed')
             if '1' in output:
                 break
             sleep(sleep_time)
     def get_activity(self):
-        output,err = self.shell('"dumpsys window | grep mTopFullscreenOpaqueWindowState | sed \'s/ /\\n/g\' | tail -n 1 | sed \'s/\\/.*$//g\'"')
+        output = self.shell('"dumpsys window | grep mTopFullscreenOpaqueWindowState | sed \'s/ /\\n/g\' | tail -n 1 | sed \'s/\\/.*$//g\'"')
         return output
 
 def check_edl():
@@ -183,7 +186,7 @@ class QT():
         self.mbn = mbn
     
     def intosahara(self):
-        output,err = run_wait(f'{self.qsspath} -u {str(self.port)} -s 13:"{self.mbn}"')
+        output = run_wait(f'{self.qsspath} -u {str(self.port)} -s 13:"{self.mbn}"')
         if not 'Sahara protocol completed' in output:
             return output
         else:
@@ -194,10 +197,10 @@ class QT():
         self.intosahara()
 
     def qsaharaserver(self,args):
-        return run_wait(f'{self.qsspath} {args}')[0]
+        return run_wait(f'{self.qsspath} {args}')
     
     def fh_loader(self,args):
-        return run_wait(f'{self.fhlpath} {args}')[0]
+        return run_wait(f'{self.fhlpath} {args}')
     
     def fh_loader_err(self,args):
         output = self.fh_loader(args)
@@ -256,7 +259,7 @@ class MAGISKBOOT():
     def __init__(self,path):
         self.path = path
     def magiskboot(self,args):
-        output,err = run_wait(f'{self.path} {args}')
+        output = run_wait(f'{self.path} {args}')
         return output
 
 def patch_boot(
@@ -489,17 +492,17 @@ class FASTBOOT():
         return run_wait(f'{self.path} {args}')
     def wait_for_fastboot(self):
         while True:
-            if 'fastboot' in self.fastboot('devices')[0]:
+            if 'fastboot' in self.fastboot('devices'):
                 break
             sleep(0.5)
     def flash(self,part,img):
-        output,err = self.fastboot(f'flash {part} {img}')
+        output = self.fastboot(f'flash {part} {img}')
         if 'Finished' in output:
             return 'success'
         else:
             return output
     def erase(self,part):
-        output,err = self.fastboot(f'erase {part}')
+        output = self.fastboot(f'erase {part}')
         if 'Finished' in output:
             return 'success'
         else:
