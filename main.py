@@ -657,6 +657,21 @@ while True:
         else:
             fh_loader = 'xtcfh_loader.exe'
 
+        sendxml = ''
+        sendxml_list = []
+        mbn = ''
+        for i in os.listdir(f'data/superrecovery/{model}_{sr_version}/'):
+            if i[:5] == 'patch' and i[-3:] == 'xml':
+                sendxml_list.append(i)
+            elif i[:10] == 'rawprogram' and i[-3:] == 'xml':
+                sendxml_list.append(i)
+            if i[:4] == 'prog' and i[-3:] == 'mbn':
+                mbn = f'data/superrecovery/{model}_{sr_version}/{i}'
+        
+        for i in sendxml_list:
+            sendxml = sendxml + i + ','
+        sendxml = sendxml[:-1]
+
         status.update('等待连接')
         status.start()
         console.log('等待连接')
@@ -669,25 +684,11 @@ while True:
         port = tools.wait_for_edl()
         console.log('连接成功!')
 
-        qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,f'data/superrecovery/{model}_{sr_version}/mbn.mbn')
+        qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
 
         console.log('进入sahara模式')
         status.update('进入sahara模式')
         tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
-
-        sendxml = ''
-        sendxml_list = []
-        for i in os.listdir(f'data/superrecovery/{model}_{sr_version}/'):
-            if i[:5] == 'patch' and i[-3:] == 'xml':
-                sendxml_list.append(i)
-            elif i[:10] == 'rawprogram' and i[-3:] == 'xml':
-                sendxml_list.append(i)
-        
-        for i in sendxml_list:
-            sendxml = sendxml + i + ','
-        sendxml = sendxml[:-1]
-
-        
 
         console.log('开始超恢')
         console.log('提示: 此过程耗时较长,可能需要1-2分钟,请耐心等待')
