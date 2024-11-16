@@ -14,9 +14,9 @@
 
 ![主界面](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/MENU.png)
 
-![Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/Root.apng)
+![Root](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/Root.gif)
 
-![超级恢复](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/SuperRecovery.apng)
+![超级恢复](https://www.github.com/OnesoftQwQ/XTCEasyRootPlus/raw/refs/heads/main/images/SuperRecovery.gif)
 
 ## To-Do
 
