@@ -859,7 +859,7 @@ while True:
         os.system('cls')
         tools.print_logo(version)
         print('')
-        about = '''XTCEasyRootPlus时一个使用Python制作的小天才电话手表一键Root程序
+        about = '''XTCEasyRootPlus是一个使用Python制作的小天才电话手表一键Root程序
 本项目以GPL协议开源在Github:https://www.github.com/OnesoftQwQ/XTCEasyRootPlus
 
 作者:
