@@ -47,7 +47,7 @@ status.update('正在检查更新')
 status.start()
 console.log('检查最新版本')
 try: #尝试获取版本文件
-    with requests.get('https://xtc-files.oss.onesoft.top/easyrootplus/version.json') as r:   #获取版本信息
+    with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/version.json') as r:   #获取版本信息
         read = json.loads(r.content)
     latest_version = read
     if latest_version[0] >= version[0] and latest_version[1] > version[1]:
@@ -155,7 +155,7 @@ while True:
         if not os.path.exists(f'data/{model}'):
             console.log('下载文件')
             status.update('下载文件')
-            tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/{model}.zip',f'tmp/{model}.zip')
+            tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/{model}.zip',f'tmp/{model}.zip')
             
             console.log('解压文件')
             status.update('解压文件')
@@ -173,12 +173,12 @@ while True:
             if info['version_of_android'] == '7.1.1':
                 filelist = ['appstore.apk','moyeinstaller.apk','xtctoolbox.apk','filemanager.apk','notice.apk']
                 for i in filelist:
-                    tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/apps/{i}',f'tmp/{i}',progress=False)
+                    tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
             elif info['version_of_android'] == '8.1.0':
                 filelist = ['appstore.apk','notice.apk','wxzf.apk','wcp2.apk','datacenter.apk','xws.apk','launcher.apk','11605.apk','filemanager.apk','settings.apk']
                 for i in filelist:
-                    tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/apps/{i}',f'tmp/{i}',progress=False)
-                tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip',progress=False)
+                    tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
+                tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip',progress=False)
 
         download_thread = threading.Thread(target=download_all_files)
         download_thread.start()
@@ -605,7 +605,7 @@ while True:
         status.update('获取超级恢复列表')
         status.start()
         console.log('获取超级恢复列表')
-        with requests.get('https://xtc-files.oss.onesoft.top/easyrootplus/superrecovery.json') as r:
+        with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/superrecovery.json') as r:
             superrecovery : dict = json.loads(r.content)
         
         console.log('获取成功!')
@@ -797,7 +797,7 @@ while True:
                         console.log('开始下载文件')
                         model = tools.xtc_models[adb.get_innermodel()]
                         status.stop()
-                        tools.download_file(f'https://xtc-files.oss.onesoft.top/easyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip')
+                        tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip')
                         status.update('开始安装')
                         status.start()
                         console.log('开始安装')
