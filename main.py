@@ -741,6 +741,7 @@ while True:
                         console.log('安装成功!')
                     else:
                         tools.print_error(f'安装{i.split('/')[-1]}失败',output)
+                status.stop()
                 input('安装完毕!按回车返回主界面')
 
             elif choice.name[0] == '2':
@@ -767,6 +768,7 @@ while True:
                         adb.push(i,'/sdcard/temp_module.zip')
                         adb.shell('su -c magisk --install-module /sdcard/temp_module.zip')
                         adb.shell('rm -rf /sdcard/temp_module.zip')
+                status.stop()
                 input('安装完毕!按回车返回主界面')
 
             elif choice.name[0] == '3':
@@ -805,8 +807,10 @@ while True:
                         adb.shell('su -c magisk --install-module /sdcard/xtcpatch.zip')
                         adb.shell('rm -rf /sdcard/xtcpatch.zip')
                         console.log('安装成功!')
+                    status.stop()
                     input('安装完毕!按回车回到工具箱界面')
                 else:
+                    status.stop()
                     input('你貌似不是小天才设备!按回车回到工具箱界面')
 
             elif choice.name[0] == '4':
@@ -837,8 +841,10 @@ while True:
                         status.stop()
                         input('安装完毕!按回车回到工具箱界面')
                     else:
+                        status.stop()
                         input('你的机型不支持CaremeOSPro!按回车回到工具箱界面')
                 else:
+                    status.stop()
                     input('你貌似不是小天才设备!按回车回到工具箱界面')
             
             elif choice.name[0] == '5':
