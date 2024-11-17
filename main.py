@@ -691,14 +691,15 @@ while True:
         tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
 
         console.log('开始超恢')
-        console.log('提示: 此过程耗时较长,可能需要1-2分钟,请耐心等待')
+        console.log('提示: 此过程耗时较长,请耐心等待')
         status.update('超级恢复中')
         tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
         sleep(0.5)
         tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
         sleep(0.5)
         tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
-
+        sleep(0.5)
+        qt.exit9008()
         status.stop()
         input('超恢成功!按下回车键回到主界面')
 
@@ -716,6 +717,7 @@ while True:
                     noneprompt.Choice('3.安装XTCPatch'),
                     noneprompt.Choice('4.安装CaremeOS Pro'),
                     noneprompt.Choice('5.开启充电可用'),
+                    noneprompt.Choice('6.刷入自定义固件'),
                 ],
                 default_select=2
             ).prompt()
@@ -851,9 +853,56 @@ while True:
                 output = adb.shell('setprop persist.sys.charge.usable true')
                 console.log('开启成功!')
                 input('按回车回到工具箱界面')
+            
+            elif choice.name[0] == '6':
+                input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
+                console.log('选择mbn文件')
+                mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
+                console.log('选择Rawprogram文件与Patch文件')
+                sendxml_list = filedialog.askopenfilenames(title='请选择Rawprogram文件与Patch文件',filetypes=[('XML文件','rawprogram*.xml;patch*.xml')])
+                search_path = sendxml_list[0][:-len(sendxml_list[0].split('/')[-1])-1]
+                fh_loader = {True: 'xtcfh_loader.exe',False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
+                
+                sendxml = ''
+                for i in sendxml_list:
+                    sendxml = sendxml + i + ','
+                sendxml = sendxml[:-1]
+
+                status.update('等待连接')
+                status.start()
+                console.log('等待连接')
+                while True:
+                    if adb.is_connect():
+                        adb.adb('reboot edl')
+                        break
+                    if tools.check_edl():
+                        break
+                port = tools.wait_for_edl()
+                console.log('连接成功!')
+
+                qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
+
+                status.update('刷入固件')
+                status.start()
+                console.log('开始刷入固件')
+                console.log('提示:此过程可能耗时较长,请耐心等待')
+
+                tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
+
+                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="{search_path}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                sleep(0.5)
+                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                sleep(0.5)
+                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                sleep(0.5)
+                qt.exit9008()
+
+                console.log('刷入成功!')
+                status.stop()
+                input('按回车返回工具箱界面')
 
 
-
+                
 
     elif choice.name == '4.关于':
         os.system('cls')
