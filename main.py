@@ -53,7 +53,7 @@ try: #尝试获取版本文件
     if latest_version[0] >= version[0] and latest_version[1] > version[1]:
         console.log(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
         console.log('开始下载新版本......')
-        status.update('下载新版本')
+        status.stop()
         tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/XTCEasyRootPlusInstaller.exe','tmp/XTCEasyRootPlusInstaller.exe')
         subprocess.Popen('tmp/XTCEasyRootPlusInstaller.exe')
         sys.exit()
