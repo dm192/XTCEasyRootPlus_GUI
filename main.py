@@ -891,11 +891,11 @@ while True:
 
                 tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
 
-                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="{search_path}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                tools.iferror(qt.fh_loader_err(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="{search_path}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复',status,mode='stop')
                 sleep(0.5)
-                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                tools.iferror(qt.fh_loader_err(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复',status,mode='stop')
                 sleep(0.5)
-                tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+                tools.iferror(qt.fh_loader_err(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复',status,mode='stop')
                 sleep(0.5)
                 qt.exit9008()
 
