@@ -391,27 +391,27 @@ while True:
             tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.apk','tmp/',console)
             
             console.log('修补完毕')
-            if model == 'Z7A' or model == 'Z6_DFB':
+            if model in ('Z7A','Z6_DFB'):
                 console.log('刷入recovery')
                 status.update('刷入recovery') 
-                os.rename('tmp/boot_new.img','recovery.img')
+                os.rename('tmp/boot_new.img','tmp/recovery.img')
                 tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
             elif not is_v3:
                 console.log('刷入boot')
                 status.update('刷入boot') 
                 os.remove('tmp/boot.img')
-                os.rename('tmp/boot_new.img','boot.img')
+                os.rename('tmp/boot_new.img','tmp/boot.img')
                 tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入boot',status,mode='exit9008',qt=qt)
             console.log('刷入boot,aboot,userdata,misc')
             status.update('刷入boot,aboot,userdata,misc') 
             tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入rawprogram',status,mode='stop')
             console.log('刷入成功!')
-            if is_v3:
-                status.update('刷入空boot') 
+            if not model in ('Z7A','Z6_DFB') and is_v3:
+                status.update('刷入空boot'), 
                 console.log('刷入空boot')
                 os.remove('tmp/boot.img')
                 shutil.copy(f'bin/eboot.img','tmp/boot.img')
-                tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入空boot',status,mode='exit9008',qt=qt)
+                tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入空boot',status,mode='exit9008',qt=qt)
             tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
             status.update('退出9008')
             console.log('退出9008模式')
