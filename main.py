@@ -701,6 +701,8 @@ while True:
         sleep(0.5)
         qt.exit9008()
         status.stop()
+        console.log('超恢成功!')
+        console.log('提示:若未开机可直接长按电源键开机进入系统')
         input('超恢成功!按下回车键回到主界面')
 
     elif choice.name == '3.工具箱':

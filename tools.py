@@ -27,11 +27,11 @@ def run_wait(args: str,returncode=False):
         try:
             stdout = p.stdout.decode()
             with open('log.log','a') as f:
-                f.write(f'{p.stdout}\n\n')
+                f.write(f'{stdout}\n\n')
         except UnicodeDecodeError:
             stdout = p.stdout
             with open('log.log','ab') as f:
-                f.write(f'{p.stdout}\n\n')
+                f.write(f'{stdout}\n\n')
         
         return stdout
 
