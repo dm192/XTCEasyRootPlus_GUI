@@ -293,6 +293,7 @@ while True:
             status.update('安装必备软件')
             for i in os.listdir(f'tmp/'):
                 if i[-3:] == 'apk':
+                    console.log(f'安装{i}')
                     tools.iferror(adb.install(f'tmp/{i}',[]),f'安装{i}',status,mode='skip')
 
             if mode == 'recovery':
@@ -521,7 +522,7 @@ while True:
             console.rule('接下来需要你进行一些手动操作',characters='=')
             input('请打开手表上的"Magisk"或"MagiskDelta"APP,点击右上角设置,往下滑找到自动响应,将其设置为"允许";然后找到"超级用户通知",将其设置为"无",完成后按下回车继续')
             input('请打开手表上的"Edxposed Installer"APP,然后直接返回退出,完成后按下回车继续')
-            input('请打开手表上的"SystemPlus"APP,依次点击"激活SystemPlus"和"激活核心破解"按钮,完成后按下回车继续')
+            input('请打开手表上的"SystemPlus"APP,滑到最下面点击"自激活",依次点击"激活SystemPlus"和"激活核心破解"按钮,完成后按下回车继续')
             console.rule('',characters='=')
 
             adb.push('bin/systemplus.sh','/sdcard/')
@@ -584,8 +585,8 @@ while True:
             console.log('安装软件')
             status.update('安装软件')
             for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk','settings.apk']:
-                status.update(f'安装{i}')
-                tools.iferror(adb.install(f'tmp/{i}'),f'安装{i}')
+                console.log(f'安装{i}')
+                tools.iferror(adb.install(f'tmp/{i}'),f'安装{i}',status)
             
             console.log('设置DPI为320')
             status.update('设置DPI')
