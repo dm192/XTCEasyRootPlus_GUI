@@ -508,7 +508,7 @@ while True:
             sleep(5)
             if not 'com.xtc.i3launcher' in adb.get_activity():
                 console.log('检测到桌面崩溃!设置DPI为280')
-                status('设置DPI')
+                status.update('设置DPI')
                 adb.shell('wm density 280')
                 console.log('请点击屏幕上的"重新打开应用"')
                 status.update('等待点击')

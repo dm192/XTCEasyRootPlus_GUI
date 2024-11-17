@@ -31,7 +31,10 @@ def run_wait(args: str,returncode=False):
         except UnicodeDecodeError:
             stdout = p.stdout
             with open('log.log','ab') as f:
-                f.write(f'{stdout}\n\n')
+                f.write(stdout)
+            with open('log.log','a') as f:
+                f.write('\n\n')
+            
         
         return stdout
 
@@ -187,10 +190,16 @@ class QT():
     
     def intosahara(self):
         output = run_wait(f'{self.qsspath} -u {str(self.port)} -s 13:"{self.mbn}"')
-        if not 'Sahara protocol completed' in output:
-            return output
+        if type(output) == str:
+            if not 'Sahara protocol completed' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return 'success'
+            if not b'Sahara protocol completed' in output:
+                return output
+            else:
+                return 'success'
 
     def reboot2edl(self,adb: ADB):
         adb.adb('reboot edl')
@@ -204,24 +213,42 @@ class QT():
     
     def fh_loader_err(self,args):
         output = self.fh_loader(args)
-        if 'All Finished Successfully' in output:
-            return 'success'
+        if type(output) == str:
+            if not 'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return output
+            if not b'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
             
     def exit9008(self):
         output = self.fh_loader(rf'--port="\\.\COM{self.port}" --sendxml="ResetToEDL.xml" --search_path="bin/" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
-        if not 'All Finished Successfully' in output:
-            return output
+        if type(output) == str:
+            if not 'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return 'success'
+            if not b'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
     
     def load_xml(self,xml_path,memory='EMMC'):
         output = self.fh_loader(rf'--port=\\.\COM{self.port} --memoryname={memory} --sendxml={xml_path} --convertprogram2read --noprompt')
-        if not 'All Finished Successfully' in output:
-            return output
+        if type(output) == str:
+            if not 'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return 'success'
+            if not b'All Finished Successfully' in output:
+                return output
+            else:
+                return 'success'
 
 def extract_files(zip_path,extract_files,extract_path,filetree=False):
     if type(extract_files) == str():
@@ -497,16 +524,28 @@ class FASTBOOT():
             sleep(0.5)
     def flash(self,part,img):
         output = self.fastboot(f'flash {part} {img}')
-        if 'Finished' in output:
-            return 'success'
+        if type(output) == str:
+            if not 'Finished' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return output
+            if not b'Finished' in output:
+                return output
+            else:
+                return 'success'
     def erase(self,part):
         output = self.fastboot(f'erase {part}')
-        if 'Finished' in output:
-            return 'success'
+        if type(output) == str:
+            if not 'Finished' in output:
+                return output
+            else:
+                return 'success'
         else:
-            return output
+            if not b'Finished' in output:
+                return output
+            else:
+                return 'success'
         
 
 def install_driver():
