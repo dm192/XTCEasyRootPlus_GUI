@@ -320,17 +320,24 @@ class QT():
         os.remove(f'{name}.xml')
 
         return output
-    def read_partitions(self,partitions: dict):
+    def read_partitions(self,partitions: list,output: str = None):
         '''
         {
             'name': {'start': start, 'size': size},
             'name': {'start': start, 'size': size},
         }
         '''
-        for i in list(partitions.keys()):
-            output = self.read_partition(i,partitions[i]['start'],partitions[i]['size'])
+        if not output is None:
+            if not os.path.exists(output):
+                os.mkdir(output)
+        for i in partitions:
+            output = self.read_partition(i)
             if not output == 'success':
+                input()
                 print_error(f'读取分区{i}失败',output)
+            else:
+                if not output is None:
+                    shutil.copy(f'{i}.img',output)
     
     def write_partition(self,file: str,name: str,start: int = None,size: int = None):
         xml = '''<?xml version="1.0" ?>
@@ -343,7 +350,8 @@ class QT():
             start = partition['start']
             size = partition['size']
         
-        shutil.copy(file,f'tmp/{name}.img')
+        if not os.path.dirname(os.path.abspath(file)) == os.path.abspath('tmp/'):
+            shutil.copy(file,f'tmp/{name}.img')
         
         xml = xml.replace('__name__',name)
         xml = xml.replace('__size__',str(size),)
@@ -361,17 +369,18 @@ class QT():
 
         return output
     
-    def write_partitions(self,partitions: dict):
+    def write_partitions(self,partitions: list):
         '''
         {
             'name': {'file': filepath, 'start': start, 'size': size},
             'name': {'file': filepath, 'start': start, 'size': size},
         }
         '''
-        for i in list(partitions.keys()):
-            output = self.write_partition(i,partitions[i]['file'],partitions[i]['start'],partitions[i]['size'])
+        for i in partitions:
+            output = self.write_partition(i)
             if not output == 'success':
                 print_error(f'读取分区{i}失败',output)
+                input()
                 break
 
 def extract_files(zip_path,extract_files,extract_path,filetree=False):

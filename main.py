@@ -759,6 +759,7 @@ while True:
                                 log('安装成功!')
                             else:
                                 tools.print_error(f'安装{i.split('/')[-1]}失败',output)
+                                input()
                         status.stop()
                         input('安装完毕!按回车返回主界面')
 
@@ -782,6 +783,7 @@ while True:
                                     log('安装成功!')
                                 else:
                                     tools.print_error(f'安装{i.split('/')[-1]}失败',output)
+                                    input()
                             else:
                                 adb.push(i,'/sdcard/temp_module.zip')
                                 adb.shell('su -c magisk --install-module /sdcard/temp_module.zip')
@@ -812,6 +814,7 @@ while True:
                                     log('安装成功!')
                                 else:
                                     tools.print_error('安装XTCPatch失败',output)
+                                    input()
                             elif android_version == '8.1.0':
                                 status.update('下载文件')
                                 log('开始下载文件')
@@ -920,6 +923,7 @@ while True:
                     case '7.分区管理器':
                         input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
 
+                        log('选择mbn文件')
                         mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
                         fh_loader = {True: 'xtcfh_loader.exe', False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
 
@@ -945,7 +949,7 @@ while True:
                         partitions = qt.get_partitions_info()
 
                         while True:
-                            part_list = [noneprompt.Choice('q.退出')]
+                            part_list = [noneprompt.Choice('q.退出'),noneprompt.Choice('#.备份全部(全分区备份)'),noneprompt.Choice('#.批量写入(可用于写入备份的全分区)')]
                             for i in list(partitions.keys()):
                                 part_list.append(noneprompt.Choice(i))
                             status.stop()
@@ -954,24 +958,69 @@ while True:
                                 log('退出9008模式')
                                 qt.exit9008()
                                 break
-                            opration = {'1.读取': 'read', '2.刷入': 'write'}[noneprompt.ListPrompt('请选择操作',[noneprompt.Choice('1.读取'),noneprompt.Choice('2.刷入')]).prompt().name]
-                            if opration == 'read':
-                                status.update(f'读取{partition}分区')
+                            elif partition == '#.备份全部(全分区备份)':
+                                skipuserdata = noneprompt.ConfirmPrompt('是否跳过备份Userdata?(提示:Userdata是用户数据,备份耗时较久且很占空间)',default_choice=True).prompt()
+                                if not os.path.exists('backup/'):
+                                    os.mkdir('backup')
+                                status.update('读取全部分区')
                                 status.start()
-                                log(f'开始读取{partition}分区')
-                                tools.iferror(qt.read_partition(partition,partitions[partition]['start'],partitions[partition]['size']),f'读取{partition}分区',status,mode='stop')
+                                log('开始读取全部分区')
+                                for i in list(partitions.keys()):
+                                    if i == 'userdata' and skipuserdata:
+                                        log('跳过读取userdata')
+                                        continue
+                                    log(f'读取{i}')
+                                    if i == 'system' or i == 'userdata':
+                                        log(f'提示:读取{i}可能需要耗费较长的时间,请耐心等待')
+                                    output = qt.read_partition(i)
+                                    if not output == 'success':
+                                        status.stop()
+                                        tools.print_error(f'读取{i}失败!')
+                                        qt.exit9008()
+                                        input()
+                                        break
+                                    shutil.copy(f'{i}.img','backup/')
+                                    os.remove(f'{i}.img')
                                 status.stop()
-                                console.log('读取成功!')
-                                input(f'读取成功!读取的文件在{os.getcwd()}\n按回车回到分区管理界面')
+                                input(f'读取全分区完毕!文件保存在{os.getcwd()}\\backup\n按回车回到分区界面')
+                            elif partition == '#.批量写入(可用于写入备份的全分区)':
+                                log('选择文件')
+                                files = filedialog.askopenfilenames(title='选择镜像文件(提示:是多选哦)',filetypes=[('镜像文件','*.img;*.bin')])
+                                partitions = qt.get_partitions_info()
+
+                                log('开始批量写入')
+                                status.update('批量写入')
+                                status.start()
+                                for i in files:
+                                    if i.split('/')[-1][:-4] in list(partitions.keys()):
+                                        log(f'写入{i.split('/')[-1][:-4]}')
+                                        output = qt.write_partition(i,i.split('/')[-1][:-4])
+                                        if not output == 'success':
+                                            status.stop()
+                                            tools.print_error(f'刷入{i.split('/')[-1][:-4]}失败',output)
+                                            tools.exit_after_enter()
+                                status.stop()
+                                log('全部刷入成功!')
+                                input('按回车回到分区管理界面')
                             else:
-                                file = filedialog.askopenfilename(title='请选择要刷入的文件',filetypes=[('镜像文件','*.img')])
-                                status.update(f'刷入{partition}分区')
-                                status.start()
-                                log(f'开始刷入{partition}分区')
-                                tools.iferror(qt.write_partition(file,partition,partitions[partition]['start'],partitions[partition]['size']),f'刷入{partition}分区',status,mode='stop')
-                                status.stop()
-                                console.log('刷入成功!')
-                                input('刷入成功!按回车回到分区管理界面')
+                                opration = {'1.读取': 'read', '2.刷入': 'write'}[noneprompt.ListPrompt('请选择操作',[noneprompt.Choice('1.读取'),noneprompt.Choice('2.刷入')]).prompt().name]
+                                if opration == 'read':
+                                    status.update(f'读取{partition}分区')
+                                    status.start()
+                                    log(f'开始读取{partition}分区')
+                                    tools.iferror(qt.read_partition(partition),f'读取{partition}分区',status,mode='stop')
+                                    status.stop()
+                                    console.log('读取成功!')
+                                    input(f'读取成功!读取的文件在{os.getcwd()}\n按回车回到分区管理界面')
+                                else:
+                                    file = filedialog.askopenfilename(title='请选择要刷入的文件',filetypes=[('镜像文件','*.img;*.bin')])
+                                    status.update(f'刷入{partition}分区')
+                                    status.start()
+                                    log(f'开始刷入{partition}分区')
+                                    tools.iferror(qt.write_partition(file,partition),f'刷入{partition}分区',status,mode='stop')
+                                    status.stop()
+                                    console.log('刷入成功!')
+                                    input('刷入成功!按回车回到分区管理界面')
 
         case '4.关于':
             os.system('cls')
