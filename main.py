@@ -303,6 +303,7 @@ while True:
                 for i in os.listdir(f'tmp/'):
                     if i[-3:] == 'apk':
                         log(f'安装{i}')
+                        adb.wait_for_connect()
                         tools.iferror(adb.install(f'tmp/{i}',[]),f'安装{i}',status,mode='skip')
 
                 if mode == 'recovery':
@@ -590,6 +591,7 @@ while True:
                 status.update('安装软件')
                 for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk','settings.apk']:
                     log(f'安装{i}')
+                    adb.wait_for_connect()
                     tools.iferror(adb.install(f'tmp/{i}'),f'安装{i}',status)
 
                 log('设置DPI为320')
