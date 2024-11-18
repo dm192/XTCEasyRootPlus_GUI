@@ -920,8 +920,7 @@ while True:
                     case '7.分区管理器':
                         input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
 
-                        # mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
-                        mbn = r'E:\Python\XTCEasyRootPlus\data\Z5q\mbn.mbn'
+                        mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
                         fh_loader = {True: 'xtcfh_loader.exe', False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
 
                         status.update('等待连接')
@@ -965,8 +964,7 @@ while True:
                                 console.log('读取成功!')
                                 input(f'读取成功!读取的文件在{os.getcwd()}\n按回车回到分区管理界面')
                             else:
-                                # file = filedialog.askopenfilename(title='请选择要刷入的文件',filetypes=[('镜像文件','*.img')])
-                                file = 'boot.img'
+                                file = filedialog.askopenfilename(title='请选择要刷入的文件',filetypes=[('镜像文件','*.img')])
                                 status.update(f'刷入{partition}分区')
                                 status.start()
                                 log(f'开始刷入{partition}分区')
