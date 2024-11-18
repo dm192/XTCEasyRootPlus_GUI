@@ -131,12 +131,15 @@ while True:
             status.update('获取设备信息')
             log('获取设备信息')
             info = adb.get_info()
+            sdk_version = adb.get_version_of_sdk()
+            model = tools.xtc_models[info['innermodel']]
+            android_version = {'25': '7.1.1', '27': '8.1.0'}[sdk_version]
             table = Table()
             table.add_column("型号", width=12)
             table.add_column("代号")
             table.add_column("系统版本", justify="right")
             table.add_column("安卓版本", justify="right")
-            table.add_row(info['model'],info['innermodel'],info['version_of_system'],info['version_of_android'])
+            table.add_row(model,info['innermodel'],info['version_of_system'],android_version)
             print(table)
             status.stop()
             if not info['innermodel'] in tools.xtc_models.keys():
@@ -148,9 +151,7 @@ while True:
                 print('按下回车退出')
                 tools.exit_after_enter()
 
-            model = tools.xtc_models[info['innermodel']]
-
-            if info['version_of_android'] == '8.1.0':
+            if android_version == '8.1.0':
                 choice = noneprompt.ListPrompt(
                     '请选择想要的Magisk版本',
                     choices=[
@@ -172,7 +173,7 @@ while True:
                 status.update('解压文件')
                 tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
 
-            if info['version_of_android'] == '8.1.0':
+            if android_version == '8.1.0':
                 if magisk == '25200':
                     tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/1userdata.img','tmp/userdata.img')
                 elif magisk == '25210':
@@ -181,11 +182,11 @@ while True:
             status.stop()
 
             def download_all_files():
-                if info['version_of_android'] == '7.1.1':
+                if android_version == '7.1.1':
                     filelist = ['appstore.apk','moyeinstaller.apk','xtctoolbox.apk','filemanager.apk','notice.apk']
                     for i in filelist:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
-                elif info['version_of_android'] == '8.1.0':
+                elif android_version == '8.1.0':
                     filelist = ['appstore.apk','notice.apk','wxzf.apk','wcp2.apk','datacenter.apk','xws.apk','launcher.apk','11605.apk','filemanager.apk','settings.apk']
                     for i in filelist:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
@@ -194,7 +195,7 @@ while True:
             download_thread = threading.Thread(target=download_all_files)
             download_thread.start()
 
-            if info['version_of_android'] == '7.1.1':
+            if android_version == '7.1.1':
                 choice = noneprompt.ListPrompt(
                     '请选择Root方案',
                     choices=[
@@ -229,7 +230,7 @@ while True:
                 status.stop()
                 input('您似乎没有拔卡!如果不想喜提「手表验证异常」请先拔卡,如已拔卡无视此提示')
 
-            if info['version_of_android'] == '7.1.1':
+            if android_version == '7.1.1':
                 status.update('重启设备至9008模式')
                 status.start()
                 log('重启设备至9008模式')
@@ -375,7 +376,7 @@ while True:
 
 
 
-            elif info['version_of_android'] == '8.1.0':
+            elif android_version == '8.1.0':
                 is_v3 = tools.is_v3(model,info['version_of_system'])
                 status.update('等待连接') 
                 status.start()

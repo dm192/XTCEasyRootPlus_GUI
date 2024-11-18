@@ -178,6 +178,8 @@ class ADB():
     def get_activity(self):
         output = self.shell('"dumpsys window | grep mTopFullscreenOpaqueWindowState | sed \'s/ /\\n/g\' | tail -n 1 | sed \'s/\\/.*$//g\'"')
         return output
+    def get_version_of_sdk(self):
+        return self.shell('getprop ro.build.version.sdk').replace('\n','').replace('\r','')
 
 def check_edl():
     for port in serial.tools.list_ports.comports():
