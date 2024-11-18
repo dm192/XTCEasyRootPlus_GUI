@@ -5,6 +5,7 @@ from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
 from rich.console import Console
 from urllib import parse
 from time import sleep
+import time
 import serial.tools.list_ports
 from rich.table import Table
 import zipfile
@@ -15,28 +16,46 @@ import rich
 import rich.status
 from patch_boot import patch
 
-def run_wait(args: str,returncode=False):
-    with open('log.log','a') as f:
-        f.write(f'>>>{args}\n')
-    p = subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=False)
-    if returncode:
-        with open('log.log','a') as f:
-            f.write(f'return {p.returncode}')
-        return p.returncode
-    else:
-        try:
-            stdout = p.stdout.decode()
-            with open('log.log','a') as f:
-                f.write(f'{stdout}\n\n')
-        except UnicodeDecodeError:
-            stdout = p.stdout
-            with open('log.log','ab') as f:
-                f.write(stdout)
-            with open('log.log','a') as f:
-                f.write('\n\n')
-            
-        
-        return stdout
+
+
+class log():
+    def __init__(self):
+        if not os.path.exists('logs/'):
+            os.mkdir('logs')
+        localtime = time.localtime(time.time())
+        self.logname = f'logs/{time.strftime("%Y_%m_%d_%H-%M-%S", time.localtime())}.log'
+    def run_wait(self,args: str,returncode=False):
+        '''
+        运行一个程序并等待
+        args: string;command line
+        return
+        '''
+        with open(self.logname,'a') as f:
+            f.write(f'>>>{args}\n')
+        p = subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=False)
+        if returncode:
+            with open(self.logname,'a') as f:
+                f.write(f'return {p.returncode}')
+            return p.returncode
+        else:
+            try:
+                stdout = p.stdout.decode()
+                with open(self.logname,'a') as f:
+                    f.write(f'{stdout}\n\n')
+            except UnicodeDecodeError:
+                stdout = p.stdout
+                with open(self.logname,'ab') as f:
+                    f.write(stdout)
+                with open(self.logname,'a') as f:
+                    f.write('\n\n')
+            return stdout
+    def logging(self,log):
+        with open(self.logname,'a') as f:
+            f.write(f'log>{log}\n\n')
+
+_log = log()
+run_wait = _log.run_wait
+logging = _log.logging
 
 def clear_line():
     print('\r',end='')
@@ -174,6 +193,7 @@ def wait_for_edl(sleeptime=0.5):
         sleep(sleeptime)
 
 def print_error(title,content):
+    logging(f'错误:{title}')
     console = Console()
     print = console.print
     table = Table()
@@ -182,11 +202,12 @@ def print_error(title,content):
     print(table)
 
 class QT():
-    def __init__(self,qsspath,fhlpath,port,mbn) -> None:
+    def __init__(self,qsspath,fhlpath,port,mbn,emmcdlpath='bin/emmcdl.exe') -> None:
         self.qsspath = qsspath
         self.fhlpath = fhlpath
         self.port = port
         self.mbn = mbn
+        self.emmcdlpath = emmcdlpath
     
     def intosahara(self):
         output = run_wait(f'{self.qsspath} -u {str(self.port)} -s 13:"{self.mbn}"')
@@ -238,7 +259,7 @@ class QT():
                 return 'success'
     
     def load_xml(self,xml_path,memory='EMMC'):
-        output = self.fh_loader(rf'--port=\\.\COM{self.port} --memoryname={memory} --sendxml={xml_path} --convertprogram2read --noprompt')
+        output = self.fh_loader(rf'--port="\\.\COM{self.port}" --memoryname="{memory}" --sendxml="{xml_path}" --convertprogram2read --noprompt')
         if type(output) == str:
             if not 'All Finished Successfully' in output:
                 return output
@@ -249,6 +270,95 @@ class QT():
                 return output
             else:
                 return 'success'
+    def emmcdl(self,args):
+        return run_wait(f'{self.emmcdlpath} {args}')
+    
+    def get_partitions_info(self):
+        output = self.emmcdl(f'-p COM{self.port} -f {self.mbn} -gpt')
+
+        partlist = []
+        
+        for i in output.splitlines():
+            if len(i) > 0:
+                if i[0].isdigit():
+                    partlist.append(i)
+        
+        if not len(partlist) == 0:
+            partitions = {}
+            for i in partlist:
+                split = i.split(' ')
+                partitions[split[3]] = {'start': int(split[6]), 'size': int(split[10])}
+            return partitions
+        else:
+            return output
+    
+    def read_partition(self,name,start,size):
+        if os.path.exists(f'{name}.img'):
+            os.remove(f'{name}.img')
+
+        with open('bin/partition.xml','r') as f:
+            read = f.read()
+        
+        read = read.replace('__name__',name)
+        read = read.replace('__size__',str(size),)
+        read = read.replace('__size_kb__',str(size/2)+'.0')
+        read = read.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
+        read = read.replace('__start__',str(start))
+
+        with open(f'{name}.xml','w') as f:
+            f.write(read)
+        
+        output = self.load_xml(f'{name}.xml')
+
+        os.remove(f'{name}.xml')
+
+        return output
+    def read_partitions(self,partitions: dict):
+        '''
+        {
+            'name': {'start': start, 'size': size},
+            'name': {'start': start, 'size': size},
+        }
+        '''
+        for i in list(partitions.keys()):
+            output = self.read_partition(i,partitions[i]['start'],partitions[i]['size'])
+            if not output == 'success':
+                print_error(f'读取分区{i}失败',output)
+    
+    def write_partition(self,file,name,start,size):
+        shutil.copy(file,f'tmp/{name}.img')
+        
+        with open('bin/partition.xml','r') as f:
+            read = f.read()
+        
+        read = read.replace('__name__',name)
+        read = read.replace('__size__',str(size),)
+        read = read.replace('__size_kb__',str(size/2)+'.0')
+        read = read.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
+        read = read.replace('__start__',str(start))
+
+        with open(f'{name}.xml','w') as f:
+            f.write(read)
+        
+        output = self.fh_loader_err(rf'--port=\\.\COM{self.port} --memoryname=emmc --search_path=tmp/ --sendxml={name}.xml --noprompt')
+
+        os.remove(f'{name}.xml')
+        os.remove(f'tmp/{name}.img')
+
+        return output
+    
+    def write_partitions(self,partitions: dict):
+        '''
+        {
+            'name': {'file': filepath, 'start': start, 'size': size},
+            'name': {'file': filepath, 'start': start, 'size': size},
+        }
+        '''
+        for i in list(partitions.keys()):
+            output = self.write_partition(i,partitions[i]['file'],partitions[i]['start'],partitions[i]['size'])
+            if not output == 'success':
+                print_error(f'读取分区{i}失败',output)
+                break
 
 def extract_files(zip_path,extract_files,extract_path,filetree=False):
     if type(extract_files) == str():

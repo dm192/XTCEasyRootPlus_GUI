@@ -24,6 +24,16 @@ console = Console()
 status = console.status('')
 print = console.print
 
+class logging():
+    def __init__(self,console: Console,logging: tools.log.logging):
+        self.logging = logging
+        self.console = console
+    def log(self,log):
+        self.console.log(log)
+        self.logging(log)
+
+log = logging(console,tools.logging).log
+
 if not os.path.exists('tmp/'):
     os.mkdir('tmp')
 else:
@@ -45,34 +55,34 @@ if len(version) == 3 and version[2] == 'b':
 os.system('cls')
 status.update('正在检查更新')
 status.start()
-console.log('检查最新版本')
+log('检查最新版本')
 try: #尝试获取版本文件
     with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/version.json') as r:   #获取版本信息
         read = json.loads(r.content)
     latest_version = read
     if latest_version[0] >= version[0] and latest_version[1] > version[1]:
-        console.log(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
-        console.log('开始下载新版本......')
+        log(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
+        log('开始下载新版本......')
         status.stop()
         tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/XTCEasyRootPlusInstaller.exe','tmp/XTCEasyRootPlusInstaller.exe')
         subprocess.Popen('tmp/XTCEasyRootPlusInstaller.exe')
         sys.exit()
 except requests.ConnectionError:   #捕捉下载失败错误
-    console.log('检查更新失败，请检查你的网络或稍后再试')
+    log('检查更新失败，请检查你的网络或稍后再试')
     status.stop()
     tools.exit_after_enter() #退出
 
-console.log('当前版本为最新!')
+log('当前版本为最新!')
 sleep(1)
 
 if not os.path.exists('driver'):
-    console.log('初次使用,自动安装驱动!')
+    log('初次使用,自动安装驱动!')
     status.update('安装驱动')
-    console.log('安装Qualcomm驱动')
+    log('安装Qualcomm驱动')
     os.system('bin\\qualcommdriver.msi /quiet')
-    console.log('安装Fastboot驱动')
-    tools.run_wait('bin/fastbootdriver/DPInst_x64.exe /Q')
-    console.log('安装驱动完毕!')
+    log('安装Fastboot驱动')
+    tools.run_wait('pnputil /i /a bin/fastbootdriver/*.inf')
+    log('安装驱动完毕!')
     open('driver','w').close()
     sleep(1)
 
@@ -117,9 +127,9 @@ while True:
             print('请在手表上打开并用数据线将手表连接至电脑')
             adb.wait_for_connect()
 
-            console.log('设备已连接')
+            log('设备已连接')
             status.update('获取设备信息')
-            console.log('获取设备信息')
+            log('获取设备信息')
             info = adb.get_info()
             table = Table()
             table.add_column("型号", width=12)
@@ -154,11 +164,11 @@ while True:
                     magisk = '25210'
 
             if not os.path.exists(f'data/{model}'):
-                console.log('下载文件')
+                log('下载文件')
                 status.update('下载文件')
                 tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/{model}.zip',f'tmp/{model}.zip')
 
-                console.log('解压文件')
+                log('解压文件')
                 status.update('解压文件')
                 tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
 
@@ -222,126 +232,126 @@ while True:
             if info['version_of_android'] == '7.1.1':
                 status.update('重启设备至9008模式')
                 status.start()
-                console.log('重启设备至9008模式')
+                log('重启设备至9008模式')
                 adb.adb('reboot edl')
-                console.log('等待连接')
+                log('等待连接')
                 port = tools.wait_for_edl()
 
-                console.log('连接成功,开始读取boot分区')
+                log('连接成功,开始读取boot分区')
                 status.update('读取boot分区')
                 qt = tools.QT('bin/QSaharaServer.exe','bin/fh_loader.exe',port,f'data/{model}/mbn.mbn')
                 tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='skip')
                 tools.iferror(qt.load_xml(f'data/{model}/boot.xml'),'读取boot分区',status,mode='exit9008',qt=qt)
 
-                console.log('读取boot分区成功!')
+                log('读取boot分区成功!')
                 shutil.copy('boot.img','tmp/')
                 os.remove('boot.img')
 
-                console.log('开始修补boot分区')
+                log('开始修补boot分区')
                 status.update('修补boot分区')
                 tools.patch_boot('bin/magiskboot.exe','tmp/boot.img','bin/20400.zip','tmp/',console)
-                console.log('修补完毕')
+                log('修补完毕')
 
                 if mode == 'boot':
-                    console.log('重新刷入boot')
+                    log('重新刷入boot')
                     status.update('刷入boot')
                     os.remove('tmp/boot.img')
                     os.rename('tmp/boot_new.img','tmp/boot.img')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入boot分区',status,mode='exit9008',qt=qt)
 
                 elif mode == 'recovery':
-                    console.log('刷入recovery')
+                    log('刷入recovery')
                     status.update('刷入recovery')
                     os.rename('tmp/boot_new.img','tmp/recovery.img')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
 
-                    console.log('刷入misc')
+                    log('刷入misc')
                     status.update('刷入misc')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/misc.xml --noprompt'),'刷入misc',status,mode='exit9008',qt=qt)
 
-                console.log('刷入成功,退出9008模式')
+                log('刷入成功,退出9008模式')
                 status.update('退出9008')
                 tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
 
-                console.log('等待重新连接')
+                log('等待重新连接')
                 status.update('等待重新连接')
                 adb.wait_for_connect()
                 adb.wait_for_complete()
 
-                console.log('安装Magisk管理器')
+                log('安装Magisk管理器')
                 status.update('安装Magisk管理器')
                 tools.iferror(adb.install(f'data/{model}/manager.apk'),'安装Magisk管理器',status,mode='stop')
 
-                console.log('启动管理器')
+                log('启动管理器')
                 status.update('启动管理器')
                 sleep(5)
                 adb.shell('am start com.topjohnwu.magisk/a.c')
                 adb.push(f'data/{model}/xtcpatch','/sdcard/')
                 adb.push(f'data/{model}/magiskfile','/sdcard/')
                 adb.push('bin/2100.sh','/sdcard/')
-                console.log('刷入模块')
+                log('刷入模块')
                 status.update('刷入模块')
                 adb.shell('su -c sh /sdcard/2100.sh')
                 adb.install_module('bin/xtcpatch2100.zip')
                 adb.shell('rm -rf /sdcard/xtcpatch /sdcard/magiskfile /sdcard/2100.sh')
 
                 if download_thread.is_alive():
-                    console.log('下载文件')
+                    log('下载文件')
                     status.update('下载文件')
                     download_thread.join()
 
-                console.log('安装必备软件')
+                log('安装必备软件')
                 status.update('安装必备软件')
                 for i in os.listdir(f'tmp/'):
                     if i[-3:] == 'apk':
-                        console.log(f'安装{i}')
+                        log(f'安装{i}')
                         tools.iferror(adb.install(f'tmp/{i}',[]),f'安装{i}',status,mode='skip')
 
                 if mode == 'recovery':
-                    console.log('重启设备至9008模式')
+                    log('重启设备至9008模式')
                     status.update('等待连接')
                     adb.adb('reboot edl')
                     port = tools.wait_for_edl()
 
-                    console.log('进入sahara模式')
+                    log('进入sahara模式')
                     status.update('进入sahara模式')
                     tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
 
-                    console.log('刷入recovery')
+                    log('刷入recovery')
                     status.update('刷入recovery')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
 
-                    console.log('刷入misc')
+                    log('刷入misc')
                     status.update('刷入misc')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/misc.xml --noprompt'),'刷入misc',status,mode='exit9008',qt=qt)
 
-                    console.log('退出9008模式')
+                    log('退出9008模式')
                     status.update('等待重新连接')
                     tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
 
                     adb.wait_for_connect()
                     adb.wait_for_complete()
 
-                # console.log('安装Xposed')
+                # log('安装Xposed')
                 # status.update('安装Xposed')
                 # adb.install_module('bin/xposed-magisk.zip')
-                # console.log('重启设备')
-                # console.log('提示:首次刷入Xposed后开机可能需要[bold]7-15分钟[/bold],请耐心等待')
+                # log('重启设备')
+                # log('提示:首次刷入Xposed后开机可能需要[bold]7-15分钟[/bold],请耐心等待')
                 # status.update('等待重新连接')
                 # adb.adb('reboot')
                 # adb.wait_for_connect()
                 # adb.wait_for_complete()
-                # console.log('连接成功')
+                # log('连接成功')
 
                 # status.update('设置充电可用')
-                # console.log('设置充电可用')
+                # log('设置充电可用')
                 # adb.shell('setprop persist.sys.charge.usable true')
 
-                # console.log('充电可用已开启')
-                # console.log('模拟未充电状态')
+                # log('充电可用已开启')
+                # log('模拟未充电状态')
                 # status.update('模拟未充电状态')
                 # adb.shell('dumpsys battery unplug')
-                # console.log('已模拟未充电状态')
+                # log('已模拟未充电状态')
                 # status.stop()
 
                 # console.rule('接下来需要你对手表进行一些手动操作',characters='=')
@@ -350,19 +360,19 @@ while True:
 
                 # status.update('等待重新连接')
                 # status.start()
-                # console.log('重启手表')
+                # log('重启手表')
                 # adb.adb('reboot')
                 # adb.wait_for_connect()
                 # adb.wait_for_complete()
 
-                # console.log('连接成功!')
+                # log('连接成功!')
                 # status.update('安装改版系统应用')
-                # console.log('开始安装改版系统应用')
+                # log('开始安装改版系统应用')
                 # for i in os.listdir('bin/sysapps/'):
                 #     tools.iferror(adb.install(f'bin/sysapps/{i}'),f'安装{i}',status,mode='skip')
 
                 status.stop()
-                # console.log('恭喜你,你的手表ROOT完毕!')
+                # log('恭喜你,你的手表ROOT完毕!')
                 input('恭喜你,Root成功!按回车返回主界面')
 
 
@@ -372,58 +382,58 @@ while True:
                 is_v3 = tools.is_v3(model,info['version_of_system'])
                 status.update('等待连接') 
                 status.start()
-                console.log('重启设备至9008模式')
+                log('重启设备至9008模式')
                 adb.adb('reboot edl')
-                console.log('等待连接')
+                log('等待连接')
                 port = tools.wait_for_edl()
 
-                console.log('连接成功')
-                console.log('开始读取boot分区')
+                log('连接成功')
+                log('开始读取boot分区')
                 status.update('读取boot分区') 
                 qt = tools.QT('bin/QSaharaServer.exe','bin/fh_loader.exe',port,'bin/msm8937.mbn')
                 tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
                 tools.iferror(qt.load_xml(f'data/{model}/boot.xml'),'读取boot分区',status,mode='exit9008',qt=qt)
 
-                console.log('读取boot分区成功!')
+                log('读取boot分区成功!')
                 shutil.copy('boot.img','tmp/')
                 os.remove('boot.img')
 
-                console.log('开始修补boot分区')
+                log('开始修补boot分区')
                 status.update('修补boot分区') 
                 tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.apk','tmp/',console)
 
-                console.log('修补完毕')
+                log('修补完毕')
                 if model in ('Z7A','Z6_DFB'):
-                    console.log('刷入recovery')
+                    log('刷入recovery')
                     status.update('刷入recovery') 
                     os.rename('tmp/boot_new.img','tmp/recovery.img')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
                 elif not is_v3:
-                    console.log('刷入boot')
+                    log('刷入boot')
                     status.update('刷入boot') 
                     os.remove('tmp/boot.img')
                     os.rename('tmp/boot_new.img','tmp/boot.img')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入boot',status,mode='exit9008',qt=qt)
-                console.log('刷入boot,aboot,userdata,misc')
+                log('刷入boot,aboot,userdata,misc')
                 status.update('刷入boot,aboot,userdata,misc') 
                 tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入rawprogram',status,mode='stop')
-                console.log('刷入成功!')
+                log('刷入成功!')
                 if not model in ('Z7A','Z6_DFB') and is_v3:
                     status.update('刷入空boot'), 
-                    console.log('刷入空boot')
+                    log('刷入空boot')
                     os.remove('tmp/boot.img')
                     shutil.copy(f'bin/eboot.img','tmp/boot.img')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入空boot',status,mode='exit9008',qt=qt)
                 tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
                 status.update('退出9008')
-                console.log('退出9008模式')
+                log('退出9008模式')
                 status.update('等待重新连接') 
                 fastboot = tools.FASTBOOT('bin/fastboot.exe')
                 if not model in ('Z7A','Z6_DFB'):
                     if is_v3:
                         fastboot.wait_for_fastboot()
                         status.update('刷入boot') 
-                        console.log('刷入boot')
+                        log('刷入boot')
                         tools.iferror(fastboot.flash('boot','tmp/boot_new.img'),'刷入boot',status,mode='stop')
                     else:
                         adb.wait_for_connect()
@@ -431,38 +441,38 @@ while True:
                         adb.adb('reboot bootloader')
                         fastboot.wait_for_fastboot()
                     status.update('刷入userdata') 
-                    console.log('刷入userdata')
+                    log('刷入userdata')
                     tools.iferror(fastboot.flash('userdata','tmp/userdata.img'),'刷入userdata',status)
                     status.update('刷入misc') 
-                    console.log('刷入misc')
+                    log('刷入misc')
                     with open('tmp/misc.bin','w') as f:
                         f.write('ffbm-02')
                     tools.iferror(fastboot.flash('misc','tmp/misc.bin'),'刷入misc',status)
                     fastboot.fastboot('reboot')
                     status.update('等待重新连接') 
-                    console.log('刷入完毕,重启进入系统')
+                    log('刷入完毕,重启进入系统')
                 adb.wait_for_connect()
                 adb.wait_for_complete()
-                console.log('连接成功')
+                log('连接成功')
                 if is_v3:
-                    console.log('创建空文件')
+                    log('创建空文件')
                     status.update('创建空文件')
                     adb.shell('mkdir /data/adb/modules/XTCPatch/system/app/XTCLauncher')
                     adb.shell('touch /data/adb/modules/XTCPatch/system/app/XTCLauncher/XTCLauncher.apk')
-                    console.log('重启设备')
+                    log('重启设备')
                     status.update('等待重新连接')
                     adb.adb('reboot')
                     adb.wait_for_connect()
                     adb.wait_for_complete()
-                    console.log('连接成功!')
+                    log('连接成功!')
                     if download_thread.is_alive():
-                        console.log('下载文件')
+                        log('下载文件')
                         status.update('下载文件')
                         download_thread.join()
-                    console.log('安装11605桌面')
+                    log('安装11605桌面')
                     status.update('安装桌面')
                     tools.iferror(adb.install('bin/11605launcher.apk'),'安装11605桌面',status,mode='stop')
-                    console.log('重启设备')
+                    log('重启设备')
                     status.update('等待连接')
                     adb.adb('reboot')
                     adb.wait_for_connect()
@@ -470,15 +480,15 @@ while True:
 
                 if not model in ('Z7A','Z6_DFB'):
                     status.update('等待连接') 
-                    console.log('重启进入Fastboot')
+                    log('重启进入Fastboot')
                     adb.adb('reboot bootloader')
                     fastboot.wait_for_fastboot()
                     status.update('擦除misc') 
-                    console.log('擦除misc')
+                    log('擦除misc')
                     fastboot.erase('misc')
                     status.update('等待重新连接') 
-                    console.log('刷入完毕,重启进入系统')
-                    console.log('提示:若已进入系统但仍然卡在这里,请打开拨号盘输入"*#0769651#*"手动开启adb')
+                    log('刷入完毕,重启进入系统')
+                    log('提示:若已进入系统但仍然卡在这里,请打开拨号盘输入"*#0769651#*"手动开启adb')
                     fastboot.fastboot('reboot')
                     adb.wait_for_connect()
                     adb.wait_for_complete()
@@ -486,10 +496,10 @@ while True:
                 # choice = noneprompt.ListPrompt('现在您的手表处于什么状态?',choices=[noneprompt.Choice('1.已正常开机'),noneprompt.Choice('2.仍处于黑屏状态')]).prompt()
                 # if choice.name == '2.仍处于黑屏状态':
                 #     pass
-                console.log('开启充电可用')
+                log('开启充电可用')
                 status.update('开启充电可用')
                 adb.shell('setprop persist.sys.charge.usable true')
-                console.log('模拟未充电')
+                log('模拟未充电')
                 status.update('模拟未充电')
                 adb.shell('dumpsys battery unplug')
                 status.stop()
@@ -503,16 +513,16 @@ while True:
 
                 status.update('设置DPI')
                 status.start()
-                console.log('设置DPI为200')
+                log('设置DPI为200')
                 adb.shell('wm density 200')
-                console.log('检测桌面是否崩溃')
+                log('检测桌面是否崩溃')
                 status.update('检测桌面是否崩溃')
                 sleep(5)
                 if not 'com.xtc.i3launcher' in adb.get_activity():
-                    console.log('检测到桌面崩溃!设置DPI为280')
+                    log('检测到桌面崩溃!设置DPI为280')
                     status.update('设置DPI')
                     adb.shell('wm density 280')
-                    console.log('请点击屏幕上的"重新打开应用"')
+                    log('请点击屏幕上的"重新打开应用"')
                     status.update('等待点击')
                     while True:
                         if 'com.xtc.i3launcher' in adb.get_activity():
@@ -530,7 +540,7 @@ while True:
                 while True:
                     status.update('检查SystemPlus状态')
                     status.start()
-                    console.log('检查SystemPlus状态')
+                    log('检查SystemPlus状态')
                     output = adb.shell('sh /sdcard/systemplus.sh')
                     if not '1' in output:
                         break
@@ -538,13 +548,13 @@ while True:
                         status.stop()
                         input('SystemPlus未激活!请重新按照上文提示激活!完成后按下回车继续')
                 adb.shell('rm -rf /sdcard/systemplus.sh')
-                console.log('SystemPlus激活成功!')
+                log('SystemPlus激活成功!')
 
                 adb.push('bin/toolkit.sh','/sdcard/')
                 while True:
                     status.update('检查核心破解状态')
                     status.start()
-                    console.log('检查核心破解状态')
+                    log('检查核心破解状态')
                     output = adb.shell('sh /sdcard/toolkit.sh')
                     if not '1' in output:
                         break
@@ -552,75 +562,75 @@ while True:
                         status.stop()
                         input('核心破解未激活!请重新按照上文提示激活!完成后按下回车继续')
                 adb.shell('rm -rf /sdcard/toolkit.sh')
-                console.log('核心破解激活成功!')
+                log('核心破解激活成功!')
 
-                console.log('重启设备')
+                log('重启设备')
                 status.update('等待重新连接')
                 adb.adb('reboot')
                 adb.wait_for_connect()
                 adb.wait_for_complete()
 
-                console.log('获取uid')
+                log('获取uid')
                 status.update('获取uid')
                 chown = adb.shell('"dumpsys package com.solohsu.android.edxp.manager | grep userId="').replace('\n','').replace('\r','').split('=')[1][-5:]
-                console.log('更改文件所有者')
+                log('更改文件所有者')
                 status.update('更改文件所有者')
                 adb.shell(f'"su -c chown {chown} /data/user_de/0/com.solohsu.android.edxp.manager/conf/enabled_modules.list"')
                 adb.shell(f'"su -c chown {chown} /data/user_de/0/com.solohsu.android.edxp.manager/conf/modules.list"')
 
                 if download_thread.is_alive():
-                    console.log('下载文件')
+                    log('下载文件')
                     status.update('下载文件')
                     download_thread.join()
 
-                console.log('安装XTCPatch')
+                log('安装XTCPatch')
                 status.update('安装XTCPatch')
                 adb.push('tmp/xtcpatch.zip','/sdcard/')
                 adb.shell('su -c magisk --install-module /sdcard/xtcpatch.zip')
                 adb.shell('rm -rf /sdcard/xtcpatch.zip')
 
-                console.log('安装修改版桌面')
+                log('安装修改版桌面')
                 status.update('安装修改版桌面')
                 tools.iferror(adb.install('tmp/launcher.apk'),'安装修改版桌面',status,mode='stop')
 
-                console.log('安装软件')
+                log('安装软件')
                 status.update('安装软件')
                 for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk','settings.apk']:
-                    console.log(f'安装{i}')
+                    log(f'安装{i}')
                     tools.iferror(adb.install(f'tmp/{i}'),f'安装{i}',status)
 
-                console.log('设置DPI为320')
+                log('设置DPI为320')
                 status.update('设置DPI')
                 adb.shell('wm density 320')
 
-                console.log('重启设备')
+                log('重启设备')
                 status.update('等待连接')
                 adb.adb('reboot')
                 adb.wait_for_connect()
                 adb.wait_for_complete()
 
-                console.log('连接成功!')
+                log('连接成功!')
                 status.stop()
                 input('恭喜你,Root成功!按回车返回主界面')
 
         case '2.超级恢复(救砖/降级/恢复原版系统)':
             status.update('获取超级恢复列表')
             status.start()
-            console.log('获取超级恢复列表')
+            log('获取超级恢复列表')
             with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/superrecovery.json') as r:
                 superrecovery : dict = json.loads(r.content)
 
-            console.log('获取成功!')
+            log('获取成功!')
 
-            console.log('尝试自动识别机型')
+            log('尝试自动识别机型')
             status.update('获取机型')
             if adb.is_connect():
                 info = adb.get_info()
                 model = tools.xtc_models[info['innermodel']]
-                console.log('获取成功')
+                log('获取成功')
                 status.stop
             else:
-                console.log('获取失败,进入手动选择')
+                log('获取失败,进入手动选择')
                 status.stop()
                 choice_list = []
                 for i,x in enumerate(superrecovery.keys()):
@@ -639,9 +649,9 @@ while True:
 
             if not os.path.exists(f'data/superrecovery/{model}_{sr_version}/'):
                 status.stop()
-                console.log('下载文件')
+                log('下载文件')
                 tools.download_file(superrecovery[model][sr_version],'tmp/superrecovery.zip')
-                console.log('解压文件')
+                log('解压文件')
                 status.update('解压文件')
                 status.start()
                 if not os.path.exists('data/superrecovery/'):
@@ -676,7 +686,7 @@ while True:
 
             status.update('等待连接')
             status.start()
-            console.log('等待连接')
+            log('等待连接')
             while True:
                 if adb.is_connect():
                     adb.adb('reboot edl')
@@ -684,16 +694,16 @@ while True:
                 if not tools.check_edl() is False:
                     break
             port = tools.wait_for_edl()
-            console.log('连接成功!')
+            log('连接成功!')
 
             qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
 
-            console.log('进入sahara模式')
+            log('进入sahara模式')
             status.update('进入sahara模式')
             tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
 
-            console.log('开始超恢')
-            console.log('提示: 此过程耗时较长,请耐心等待')
+            log('开始超恢')
+            log('提示: 此过程耗时较长,请耐心等待')
             status.update('超级恢复中')
             tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
             sleep(0.5)
@@ -703,8 +713,8 @@ while True:
             sleep(0.5)
             qt.exit9008()
             status.stop()
-            console.log('超恢成功!')
-            console.log('提示:若未开机可直接长按电源键开机进入系统')
+            log('超恢成功!')
+            log('提示:若未开机可直接长按电源键开机进入系统')
             input('超恢成功!按下回车键回到主界面')
 
         case '3.工具箱':
@@ -723,6 +733,7 @@ while True:
                         noneprompt.Choice('4.安装CaremeOS Pro'),
                         noneprompt.Choice('5.开启充电可用'),
                         noneprompt.Choice('6.刷入自定义固件'),
+                        noneprompt.Choice('7.分区管理器'),
                     ],
                     default_select=2
                 ).prompt().name:
@@ -734,18 +745,18 @@ while True:
                         apk = filedialog.askopenfilenames(title='请选择安装包',filetypes=[('安卓应用程序安装包','*.apk')])
                         if not adb.is_connect():
                             status.update('等待连接')
-                            console.log('等待连接')
+                            log('等待连接')
                             status.start()
                             adb.wait_for_connect()
                             adb.wait_for_complete()
                         status.update('开始安装')
                         status.start()
-                        console.log('开始安装')
+                        log('开始安装')
                         for i in apk:
-                            console.log(f'安装{i.split('/')[-1]}')
+                            log(f'安装{i.split('/')[-1]}')
                             output = adb.install(i)
                             if output == 'success':
-                                console.log('安装成功!')
+                                log('安装成功!')
                             else:
                                 tools.print_error(f'安装{i.split('/')[-1]}失败',output)
                         status.stop()
@@ -755,20 +766,20 @@ while True:
                         module = filedialog.askopenfilenames(title='请选择模块',filetypes=[('模块','*.zip')])
                         if not adb.is_connect():
                             status.update('等待连接')
-                            console.log('等待连接')
+                            log('等待连接')
                             status.start()
                             adb.wait_for_connect()
                             adb.wait_for_complete()
                         status.update('开始安装')
                         status.start()
-                        console.log('开始安装')
+                        log('开始安装')
                         android_version = adb.get_version_of_android()
                         for i in apk:
-                            console.log(f'安装{i.split('/')[-1]}')
+                            log(f'安装{i.split('/')[-1]}')
                             if android_version == '7.1.1':
                                 output = adb.install_module(i)
                                 if output == 'success':
-                                    console.log('安装成功!')
+                                    log('安装成功!')
                                 else:
                                     tools.print_error(f'安装{i.split('/')[-1]}失败',output)
                             else:
@@ -781,13 +792,13 @@ while True:
                     case '3.安装XTCPatch':
                         if not adb.is_connect():
                             status.update('等待连接')
-                            console.log('等待连接')
+                            log('等待连接')
                             status.start()
                             adb.wait_for_connect()
                             adb.wait_for_complete()
                         status.update('获取安卓版本')
                         status.start()
-                        console.log('获取安卓版本')
+                        log('获取安卓版本')
                         android_version = adb.get_version_of_android()
                         model = adb.get_model()
 
@@ -795,25 +806,25 @@ while True:
                             if android_version == '7.1.1':
                                 status.update('开始安装')
                                 status.start()
-                                console.log('开始安装')
+                                log('开始安装')
                                 output = adb.install_module('bin/xtcpatch2100.zip')
                                 if output == 'success':
-                                    console.log('安装成功!')
+                                    log('安装成功!')
                                 else:
                                     tools.print_error('安装XTCPatch失败',output)
                             elif android_version == '8.1.0':
                                 status.update('下载文件')
-                                console.log('开始下载文件')
+                                log('开始下载文件')
                                 model = tools.xtc_models[adb.get_innermodel()]
                                 status.stop()
                                 tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch/{model}.zip','tmp/xtcpatch.zip')
                                 status.update('开始安装')
                                 status.start()
-                                console.log('开始安装')
+                                log('开始安装')
                                 adb.push('tmp/xtcpatch.zip','/sdcard/xtcpatch.zip')
                                 adb.shell('su -c magisk --install-module /sdcard/xtcpatch.zip')
                                 adb.shell('rm -rf /sdcard/xtcpatch.zip')
-                                console.log('安装成功!')
+                                log('安装成功!')
                             status.stop()
                             input('安装完毕!按回车回到工具箱界面')
                         else:
@@ -823,28 +834,28 @@ while True:
                     case '4.安装CaremeOS Pro':
                         if not adb.is_connect():
                             status.update('等待连接')
-                            console.log('等待连接')
+                            log('等待连接')
                             status.start()
                             adb.wait_for_connect()
                             adb.wait_for_complete()
                         status.update('获取安卓版本')
                         status.start()
-                        console.log('获取安卓版本')
+                        log('获取安卓版本')
                         android_version = adb.get_version_of_android()
                         model = adb.get_model()
 
                         if 'XTC' in model:
                             if android_version == '8.1.0':
-                                console.log('开始下载文件')
+                                log('开始下载文件')
                                 status.stop()
                                 tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/caremeospro.zip','tmp/caremeospro.zip')
-                                console.log('开始安装')
+                                log('开始安装')
                                 status.update('安装CaremeOSPro')
                                 status.start()
                                 adb.push('tmp/caremeospro.zip','/sdcard/caremeospro.zip')
                                 adb.shell('su -c magisk --install-module /sdcard/caremeospro.zip')
                                 adb.shell('rm -rf /sdcard/caremeospro.zip')
-                                console.log('安装成功!')
+                                log('安装成功!')
                                 status.stop()
                                 input('安装完毕!按回车回到工具箱界面')
                             else:
@@ -856,14 +867,14 @@ while True:
 
                     case '5.开启充电可用':
                         output = adb.shell('setprop persist.sys.charge.usable true')
-                        console.log('开启成功!')
+                        log('开启成功!')
                         input('按回车回到工具箱界面')
 
                     case '6.刷入自定义固件':
                         input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
-                        console.log('选择mbn文件')
+                        log('选择mbn文件')
                         mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
-                        console.log('选择Rawprogram文件与Patch文件')
+                        log('选择Rawprogram文件与Patch文件')
                         sendxml_list = filedialog.askopenfilenames(title='请选择Rawprogram文件与Patch文件',filetypes=[('XML文件','rawprogram*.xml;patch*.xml')])
                         search_path = sendxml_list[0][:-len(sendxml_list[0].split('/')[-1])-1]
                         fh_loader = {True: 'xtcfh_loader.exe',False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
@@ -875,7 +886,7 @@ while True:
 
                         status.update('等待连接')
                         status.start()
-                        console.log('等待连接')
+                        log('等待连接')
                         while True:
                             if adb.is_connect():
                                 adb.adb('reboot edl')
@@ -883,14 +894,14 @@ while True:
                             if tools.check_edl():
                                 break
                         port = tools.wait_for_edl()
-                        console.log('连接成功!')
+                        log('连接成功!')
 
                         qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
 
                         status.update('刷入固件')
                         status.start()
-                        console.log('开始刷入固件')
-                        console.log('提示:此过程可能耗时较长,请耐心等待')
+                        log('开始刷入固件')
+                        log('提示:此过程可能耗时较长,请耐心等待')
 
                         tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
 
@@ -902,9 +913,67 @@ while True:
                         sleep(0.5)
                         qt.exit9008()
 
-                        console.log('刷入成功!')
+                        log('刷入成功!')
                         status.stop()
                         input('按回车返回工具箱界面')
+
+                    case '7.分区管理器':
+                        input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
+
+                        # mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
+                        mbn = r'E:\Python\XTCEasyRootPlus\data\Z5q\mbn.mbn'
+                        fh_loader = {True: 'xtcfh_loader.exe', False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
+
+                        status.update('等待连接')
+                        status.start()
+                        log('等待连接')
+                        while True:
+                            if adb.is_connect():
+                                adb.adb('reboot edl')
+                                break
+                            if tools.check_edl():
+                                break
+                        port = tools.wait_for_edl()
+
+                        qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
+
+                        log('进入sahara模式')
+                        status.update('进入sahara模式')
+                        tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
+
+                        log('获取分区列表')
+                        status.update('获取分区列表')
+                        partitions = qt.get_partitions_info()
+
+                        while True:
+                            part_list = [noneprompt.Choice('q.退出')]
+                            for i in list(partitions.keys()):
+                                part_list.append(noneprompt.Choice(i))
+                            status.stop()
+                            partition = noneprompt.ListPrompt('请选择分区',part_list,default_select=2).prompt().name
+                            if partition == 'q.退出':
+                                log('退出9008模式')
+                                qt.exit9008()
+                                break
+                            opration = {'1.读取': 'read', '2.刷入': 'write'}[noneprompt.ListPrompt('请选择操作',[noneprompt.Choice('1.读取'),noneprompt.Choice('2.刷入')]).prompt().name]
+                            if opration == 'read':
+                                status.update(f'读取{partition}分区')
+                                status.start()
+                                log(f'开始读取{partition}分区')
+                                tools.iferror(qt.read_partition(partition,partitions[partition]['start'],partitions[partition]['size']),f'读取{partition}分区',status,mode='stop')
+                                status.stop()
+                                console.log('读取成功!')
+                                input(f'读取成功!读取的文件在{os.getcwd()}\n按回车回到分区管理界面')
+                            else:
+                                # file = filedialog.askopenfilename(title='请选择要刷入的文件',filetypes=[('镜像文件','*.img')])
+                                file = 'boot.img'
+                                status.update(f'刷入{partition}分区')
+                                status.start()
+                                log(f'开始刷入{partition}分区')
+                                tools.iferror(qt.write_partition(file,partition,partitions[partition]['start'],partitions[partition]['size']),f'刷入{partition}分区',status,mode='stop')
+                                status.stop()
+                                console.log('刷入成功!')
+                                input('刷入成功!按回车回到分区管理界面')
 
         case '4.关于':
             os.system('cls')
