@@ -292,21 +292,28 @@ class QT():
         else:
             return output
     
-    def read_partition(self,name,start,size):
+    def read_partition(self,name: str,start: int = None,size = None):
+        xml = '''<?xml version="1.0" ?>
+<data>
+  <program SECTOR_SIZE_IN_BYTES="512" file_sector_offset="0" filename="__name__.img" label="__name__" num_partition_sectors="__size__" physical_partition_number="0" size_in_KB="__size_kb__" sparse="false" start_byte_hex="__start_hex__" start_sector="__start__" />
+</data>
+'''
+        if start is None or size is None:
+            partition = self.get_partitions_info()[name]
+            start = partition['start']
+            size = partition['size']
+        
         if os.path.exists(f'{name}.img'):
             os.remove(f'{name}.img')
-
-        with open('bin/partition.xml','r') as f:
-            read = f.read()
         
-        read = read.replace('__name__',name)
-        read = read.replace('__size__',str(size),)
-        read = read.replace('__size_kb__',str(size/2)+'.0')
-        read = read.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
-        read = read.replace('__start__',str(start))
+        xml = xml.replace('__name__',name)
+        xml = xml.replace('__size__',str(size),)
+        xml = xml.replace('__size_kb__',str(size/2)+'.0')
+        xml = xml.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
+        xml = xml.replace('__start__',str(start))
 
         with open(f'{name}.xml','w') as f:
-            f.write(read)
+            f.write(xml)
         
         output = self.load_xml(f'{name}.xml')
 
@@ -325,20 +332,27 @@ class QT():
             if not output == 'success':
                 print_error(f'读取分区{i}失败',output)
     
-    def write_partition(self,file,name,start,size):
+    def write_partition(self,file: str,name: str,start: int = None,size: int = None):
+        xml = '''<?xml version="1.0" ?>
+<data>
+  <program SECTOR_SIZE_IN_BYTES="512" file_sector_offset="0" filename="__name__.img" label="__name__" num_partition_sectors="__size__" physical_partition_number="0" size_in_KB="__size_kb__" sparse="false" start_byte_hex="__start_hex__" start_sector="__start__" />
+</data>
+'''
+        if start is None or size is None:
+            partition = self.get_partitions_info()[name]
+            start = partition['start']
+            size = partition['size']
+        
         shutil.copy(file,f'tmp/{name}.img')
         
-        with open('bin/partition.xml','r') as f:
-            read = f.read()
-        
-        read = read.replace('__name__',name)
-        read = read.replace('__size__',str(size),)
-        read = read.replace('__size_kb__',str(size/2)+'.0')
-        read = read.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
-        read = read.replace('__start__',str(start))
+        xml = xml.replace('__name__',name)
+        xml = xml.replace('__size__',str(size),)
+        xml = xml.replace('__size_kb__',str(size/2)+'.0')
+        xml = xml.replace('__start_hex__','0x{:02X}'.format(int(start/8)).ljust(10,'0'))
+        xml = xml.replace('__start__',str(start))
 
         with open(f'{name}.xml','w') as f:
-            f.write(read)
+            f.write(xml)
         
         output = self.fh_loader_err(rf'--port=\\.\COM{self.port} --memoryname=emmc --search_path=tmp/ --sendxml={name}.xml --noprompt')
 
