@@ -872,12 +872,12 @@ while True:
                         mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
                         log('选择Rawprogram文件与Patch文件')
                         sendxml_list = filedialog.askopenfilenames(title='请选择Rawprogram文件与Patch文件',filetypes=[('XML文件','rawprogram*.xml;patch*.xml')])
-                        search_path = sendxml_list[0][:-len(sendxml_list[0].split('/')[-1])-1]
+                        search_path = os.path.abspath(os.path.dirname(sendxml_list[0]))
                         fh_loader = {True: 'xtcfh_loader.exe',False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
 
                         sendxml = ''
                         for i in sendxml_list:
-                            sendxml = sendxml + i + ','
+                            sendxml = sendxml + i.split('/')[-1] + ','
                         sendxml = sendxml[:-1]
 
                         status.update('等待连接')
