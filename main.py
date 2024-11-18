@@ -112,8 +112,8 @@ while True:
         case '1.一键Root':
             console.rule('免责声明',characters='=')
             print('''1.所有已经解除第三方软件安装限制的手表都可以恢复到解除限制前之状态。
-    2.解除第三方软件安装限制后，您的手表可以无限制地安装第三方软件，需要家长加强对孩子的监管力度，避免孩子沉迷网络，影响学习；手表自带的功能不受影响。
-    3.您对手表进行解除第三方软件安装限制之操作属于您的自愿行为，若在操作过程中由于操作不当等自身原因，导致出现手表无法正常使用等异常情况，以及解除软件安装限制之后产生的一切后果将由您本人承担！''')
+2.解除第三方软件安装限制后，您的手表可以无限制地安装第三方软件，需要家长加强对孩子的监管力度，避免孩子沉迷网络，影响学习；手表自带的功能不受影响。
+3.您对手表进行解除第三方软件安装限制之操作属于您的自愿行为，若在操作过程中由于操作不当等自身原因，导致出现手表无法正常使用等异常情况，以及解除软件安装限制之后产生的一切后果将由您本人承担！''')
             console.rule('免责声明',characters='=')
             confirm = noneprompt.ConfirmPrompt('你是否已阅读并同意本《免责声明》',default_choice=False).prompt()
             if not confirm:
@@ -241,7 +241,7 @@ while True:
                 status.update('读取boot分区')
                 qt = tools.QT('bin/QSaharaServer.exe','bin/fh_loader.exe',port,f'data/{model}/mbn.mbn')
                 tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='skip')
-                tools.iferror(qt.load_xml(f'data/{model}/boot.xml'),'读取boot分区',status,mode='exit9008',qt=qt)
+                tools.iferror(qt.read_partition('boot'),'读取boot分区',status,mode='exit9008',qt=qt)
 
                 log('读取boot分区成功!')
                 shutil.copy('boot.img','tmp/')
@@ -255,19 +255,16 @@ while True:
                 if mode == 'boot':
                     log('重新刷入boot')
                     status.update('刷入boot')
-                    os.remove('tmp/boot.img')
-                    os.rename('tmp/boot_new.img','tmp/boot.img')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入boot分区',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('tmp/boot_new.img','boot'),'刷入boot分区',status,mode='exit9008',qt=qt)
 
                 elif mode == 'recovery':
                     log('刷入recovery')
                     status.update('刷入recovery')
-                    os.rename('tmp/boot_new.img','tmp/recovery.img')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('tmp/boot_new.img','recovery'),'刷入recovery',status,mode='exit9008',qt=qt)
 
                     log('刷入misc')
                     status.update('刷入misc')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/misc.xml --noprompt'),'刷入misc',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition(f'data/{model}/misc.mbn'),'刷入misc',status,mode='exit9008',qt=qt)
 
                 log('刷入成功,退出9008模式')
                 status.update('退出9008')
@@ -319,11 +316,11 @@ while True:
 
                     log('刷入recovery')
                     status.update('刷入recovery')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('tmp/boot_new.img','recovery'),'刷入recovery',status,mode='exit9008',qt=qt)
 
                     log('刷入misc')
                     status.update('刷入misc')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/misc.xml --noprompt'),'刷入misc',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition(f'data/{model}/misc.mbn','misc'),'刷入misc',status,mode='exit9008',qt=qt)
 
                     log('退出9008模式')
                     status.update('等待重新连接')
@@ -392,7 +389,7 @@ while True:
                 status.update('读取boot分区') 
                 qt = tools.QT('bin/QSaharaServer.exe','bin/fh_loader.exe',port,'bin/msm8937.mbn')
                 tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
-                tools.iferror(qt.load_xml(f'data/{model}/boot.xml'),'读取boot分区',status,mode='exit9008',qt=qt)
+                tools.iferror(qt.read_partition('boot'),'读取boot分区',status,mode='exit9008',qt=qt)
 
                 log('读取boot分区成功!')
                 shutil.copy('boot.img','tmp/')
@@ -406,14 +403,11 @@ while True:
                 if model in ('Z7A','Z6_DFB'):
                     log('刷入recovery')
                     status.update('刷入recovery') 
-                    os.rename('tmp/boot_new.img','tmp/recovery.img')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/recovery.xml --noprompt'),'刷入recovery',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('tmp/boot_new.img','recovery'),'刷入recovery',status,mode='exit9008',qt=qt)
                 elif not is_v3:
                     log('刷入boot')
                     status.update('刷入boot') 
-                    os.remove('tmp/boot.img')
-                    os.rename('tmp/boot_new.img','tmp/boot.img')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入boot',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('tmp/boot_new.img','boot'),'刷入boot',status,mode='exit9008',qt=qt)
                 log('刷入boot,aboot,userdata,misc')
                 status.update('刷入boot,aboot,userdata,misc') 
                 tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入rawprogram',status,mode='stop')
@@ -421,9 +415,7 @@ while True:
                 if not model in ('Z7A','Z6_DFB') and is_v3:
                     status.update('刷入空boot'), 
                     log('刷入空boot')
-                    os.remove('tmp/boot.img')
-                    shutil.copy(f'bin/eboot.img','tmp/boot.img')
-                    tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=tmp/ --sendxml=data/{model}/boot.xml --noprompt'),'刷入空boot',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition('bin/eboot.img','boot'),'刷入空boot',status,mode='exit9008',qt=qt)
                 tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
                 status.update('退出9008')
                 log('退出9008模式')

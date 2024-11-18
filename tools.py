@@ -350,7 +350,9 @@ class QT():
             start = partition['start']
             size = partition['size']
         
-        if not os.path.dirname(os.path.abspath(file)) == os.path.abspath('tmp/'):
+        if not os.path.abspath(file) == os.path.abspath(f'tmp/{name}.img'):
+            if os.path.exists(f'tmp/{name}.img'):
+                os.remove(f'tmp/{name}.img')
             shutil.copy(file,f'tmp/{name}.img')
         
         xml = xml.replace('__name__',name)
