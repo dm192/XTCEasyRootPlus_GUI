@@ -151,7 +151,15 @@ class ADB():
         argsstr = ''
         for i in args:
             argsstr = argsstr + '-' + i + ' '
-        output = self.adb(f'install {argsstr}{path}')
+        while True:
+            output = self.adb(f'install {argsstr}{path}')
+            if 'Success' in output:
+                break
+            elif 'Broken pipe' in output:
+                self.wait_for_connect()
+                continue
+            else:
+                break
         if 'Success' in output:
             return 'success'
         else:
