@@ -133,7 +133,7 @@ while True:
             info = adb.get_info()
             sdk_version = adb.get_version_of_sdk()
             model = tools.xtc_models[info['innermodel']]
-            android_version = {'25': '7.1.1', '27': '8.1.0'}[sdk_version]
+            android_version = info['version_of_android_from_sdk']
             table = Table()
             table.add_column("型号", width=12)
             table.add_column("代号")
@@ -151,7 +151,7 @@ while True:
                 print('按下回车退出')
                 tools.exit_after_enter()
 
-            if android_version == '8.1.0':
+            if android_version == '8.1':
                 choice = noneprompt.ListPrompt(
                     '请选择想要的Magisk版本',
                     choices=[
@@ -173,7 +173,7 @@ while True:
                 status.update('解压文件')
                 tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
 
-            if android_version == '8.1.0':
+            if android_version == '8.1':
                 if magisk == '25200':
                     tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/1userdata.img','tmp/userdata.img')
                 elif magisk == '25210':
@@ -182,11 +182,11 @@ while True:
             status.stop()
 
             def download_all_files():
-                if android_version == '7.1.1':
+                if android_version == '7.1':
                     filelist = ['appstore.apk','moyeinstaller.apk','xtctoolbox.apk','filemanager.apk','notice.apk']
                     for i in filelist:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
-                elif android_version == '8.1.0':
+                elif android_version == '8.1':
                     filelist = ['appstore.apk','notice.apk','wxzf.apk','wcp2.apk','datacenter.apk','xws.apk','launcher.apk','11605.apk','filemanager.apk','settings.apk']
                     for i in filelist:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
@@ -195,7 +195,7 @@ while True:
             download_thread = threading.Thread(target=download_all_files)
             download_thread.start()
 
-            if android_version == '7.1.1':
+            if android_version == '7.1':
                 choice = noneprompt.ListPrompt(
                     '请选择Root方案',
                     choices=[
@@ -230,7 +230,7 @@ while True:
                 status.stop()
                 input('您似乎没有拔卡!如果不想喜提「手表验证异常」请先拔卡,如已拔卡无视此提示')
 
-            if android_version == '7.1.1':
+            if android_version == '7.1':
                 status.update('重启设备至9008模式')
                 status.start()
                 log('重启设备至9008模式')
@@ -265,7 +265,7 @@ while True:
 
                     log('刷入misc')
                     status.update('刷入misc')
-                    tools.iferror(qt.write_partition(f'data/{model}/misc.mbn'),'刷入misc',status,mode='exit9008',qt=qt)
+                    tools.iferror(qt.write_partition(f'data/{model}/misc.mbn','misc'),'刷入misc',status,mode='exit9008',qt=qt)
 
                 log('刷入成功,退出9008模式')
                 status.update('退出9008')
@@ -298,10 +298,42 @@ while True:
                     status.update('下载文件')
                     download_thread.join()
 
+                log('安装弦-安装器')
+                adb.install('tmp/moyeinstaller.apk')
+
+                log('设置充电可用')
+                status.update('设置充电可用')
+                adb.shell('setprop persist.sys.charge.usable true')
+
+                log('模拟未充电')
+                status.update('模拟未充电')
+                adb.shell('dumpsys battery unplug')
+
+                status.stop()
+                console.rule('接下来需要你进行一些手动操作',characters='=')
+                print('请完成激活向导,当提示绑定时直接右滑退出,完成开机向导,进入主界面')
+                input('如果你已经进入主界面,请按回车继续')
+                console.rule('',characters='=')
+                
+                status.update('安装notice')
+                status.start()
+                log('安装notice')
+                adb.push('tmp/notice.apk','/sdcard/notice.apk')
+                if not adb.is_screen_alive():
+                    adb.shell('input keyevent 26')
+                adb.shell('am start -a android.intent.action.VIEW -d file:///sdcard/notice.apk -t application/vnd.android.package-archive')
+
+                status.stop()
+                console.rule('接下来需要你对手表进行一些手动操作',characters='=')
+                print('现在你的手表上出现了一个白色的"打开方式"对话框,请往下滑选择"使用弦安装器"并点击始终按钮')
+                input('如果你已经完成,请按回车继续')
+                console.rule('',characters='=')
+                status.start()
+
                 log('安装必备软件')
                 status.update('安装必备软件')
                 for i in os.listdir(f'tmp/'):
-                    if i[-3:] == 'apk':
+                    if i[-3:] == 'apk' and not i == 'notice.apk' and not i == 'moyeinstaller.apk':
                         log(f'安装{i}')
                         adb.wait_for_connect()
                         tools.iferror(adb.install(f'tmp/{i}',[]),f'安装{i}',status,mode='skip')
@@ -377,7 +409,7 @@ while True:
 
 
 
-            elif android_version == '8.1.0':
+            elif android_version == '8.1':
                 is_v3 = tools.is_v3(model,info['version_of_system'])
                 status.update('等待连接') 
                 status.start()
@@ -637,7 +669,9 @@ while True:
                 choice_list = []
                 for i in superrecovery[model].keys():
                     choice_list.append(noneprompt.Choice(i))
+                status.stop()
                 choice = noneprompt.ListPrompt('请选择超级恢复版本',choice_list).prompt()
+                status.start()
                 sr_version = choice.name
             else:
                 sr_version = list(superrecovery[model].keys())[0]
@@ -654,10 +688,10 @@ while True:
                 os.mkdir(f'data/superrecovery/{model}_{sr_version}/')
                 tools.extract_all('tmp/superrecovery.zip',f'data/superrecovery/{model}_{sr_version}/')
 
-            if model in ('Z1S','Z1y','Z2','Z3','Z5A','Z5Pro','Z5q'):
+            if model in ('Z1S','Z1y','Z2','Z3','Z5A','Z5Pro'):
                 fh_loader = 'fh_loader.exe'
-            elif model == 'Z6':
-                if sr_version == '1.4.6':
+            elif model == 'Z6' or model == 'Z5q':
+                if sr_version == '1.4.6' or sr_version == '3.5.1':
                     fh_loader = 'fh_loader.exe'
                 else:
                     fh_loader = 'xtcfh_loader.exe'
@@ -695,16 +729,17 @@ while True:
 
             log('进入sahara模式')
             status.update('进入sahara模式')
-            tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
+            if not qt.intosahara() == 'success':
+                log('进入sahara模式失败,可能已经进入!尝试直接超恢')
 
             log('开始超恢')
             log('提示: 此过程耗时较长,请耐心等待')
             status.update('超级恢复中')
-            tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复失败',status,mode='stop')
             sleep(0.5)
-            tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级回复失败',status)
             sleep(0.5)
-            tools.run_wait(rf'bin/{fh_loader} --port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""')
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复失败',status)
             sleep(0.5)
             qt.exit9008()
             status.stop()
@@ -769,10 +804,10 @@ while True:
                         status.update('开始安装')
                         status.start()
                         log('开始安装')
-                        android_version = adb.get_version_of_android()
+                        android_version = adb.get_version_of_android_from_sdk()
                         for i in apk:
                             log(f'安装{i.split('/')[-1]}')
-                            if android_version == '7.1.1':
+                            if android_version == '7.1':
                                 output = adb.install_module(i)
                                 if output == 'success':
                                     log('安装成功!')
@@ -796,11 +831,10 @@ while True:
                         status.update('获取安卓版本')
                         status.start()
                         log('获取安卓版本')
-                        android_version = adb.get_version_of_android()
-                        model = adb.get_model()
+                        android_version = adb.get_version_of_android_from_sdk()
 
-                        if 'XTC' in model:
-                            if android_version == '7.1.1':
+                        if adb.is_xtc():
+                            if android_version == '7.1':
                                 status.update('开始安装')
                                 status.start()
                                 log('开始安装')
@@ -810,7 +844,7 @@ while True:
                                 else:
                                     tools.print_error('安装XTCPatch失败',output)
                                     input()
-                            elif android_version == '8.1.0':
+                            elif android_version == '8.1':
                                 status.update('下载文件')
                                 log('开始下载文件')
                                 model = tools.xtc_models[adb.get_innermodel()]
@@ -839,11 +873,10 @@ while True:
                         status.update('获取安卓版本')
                         status.start()
                         log('获取安卓版本')
-                        android_version = adb.get_version_of_android()
-                        model = adb.get_model()
+                        android_version = adb.get_version_of_android_from_sdk()
 
-                        if 'XTC' in model:
-                            if android_version == '8.1.0':
+                        if adb.is_xtc():
+                            if android_version == '8.1':
                                 log('开始下载文件')
                                 status.stop()
                                 tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/caremeospro.zip','tmp/caremeospro.zip')

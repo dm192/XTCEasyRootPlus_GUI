@@ -143,6 +143,7 @@ class ADB():
         output['model'] = self.get_model()
         output['version_of_android'] = self.get_version_of_android()
         output['version_of_system'] = self.get_version_of_system()
+        output['version_of_android_from_sdk'] = self.get_version_of_android_from_sdk()
         return output
     def get_plmnstatus(self):
         return self.adb('shell getprop gsm.xtcplmn.plmnstatus')
@@ -180,6 +181,42 @@ class ADB():
         return output
     def get_version_of_sdk(self):
         return self.shell('getprop ro.build.version.sdk').replace('\n','').replace('\r','')
+    def get_version_of_android_from_sdk(self):
+        sdk = self.get_version_of_sdk()
+        return {
+            '9': '2.3',
+            '10': '2.3.3',
+            '11': '3.0',
+            '12': '3.1',
+            '13': '3.2',
+            '14': '4.0',
+            '15': '4.0.3',
+            '16': '4.1',
+            '17': '4.2',
+            '18': '4.3',
+            '19': '4.4',
+            '20': '4.4W',
+            '21': '5.0',
+            '23': '6.0',
+            '24': '7.0',
+            '25': '7.1',
+            '26': '8.0',
+            '27': '8.1',
+            '28': '9',
+            '29': '10',
+            '30': '11',
+            '31': '12',
+            '32': '12',
+            '33': '13',
+            '34': '14',
+            '35': '15'
+        }[sdk]
+    def is_xtc(self):
+        innermodel = self.get_innermodel()
+        return innermodel in list(xtc_models.keys())
+    def is_screen_alive(self):
+        output = self.shell('dumpsys display | grep mState')
+        return 'mState=ON' in output
 
 def check_edl():
     for port in serial.tools.list_ports.comports():
