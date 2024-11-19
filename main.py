@@ -735,11 +735,11 @@ while True:
             log('开始超恢')
             log('提示: 此过程耗时较长,请耐心等待')
             status.update('超级恢复中')
-            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复失败',status,mode='stop')
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --sendxml={sendxml} --search_path="data/superrecovery/{model}_{sr_version}" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复',status,mode='stop')
             sleep(0.5)
-            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级回复失败',status)
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --setactivepartition="0" --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级回复',status)
             sleep(0.5)
-            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复失败',status)
+            tools.iferror(qt.fh_loader_err(rf'--port="\\.\COM{port}" --reset --noprompt --showpercentagecomplete --zlpawarehost="1" --memoryname=""emmc""'),'超级恢复',status)
             sleep(0.5)
             qt.exit9008()
             status.stop()
@@ -764,6 +764,7 @@ while True:
                         noneprompt.Choice('5.开启充电可用'),
                         noneprompt.Choice('6.刷入自定义固件'),
                         noneprompt.Choice('7.分区管理器'),
+                        noneprompt.Choice('8.进入qmmi模式'),
                     ],
                     default_select=2
                 ).prompt().name:
@@ -1049,6 +1050,41 @@ while True:
                                     status.stop()
                                     console.log('刷入成功!')
                                     input('刷入成功!按回车回到分区管理界面')
+                    case '8.进入qmmi模式':
+                        input('本功能为高级功能,若因使用不当造成的变砖我们概不负责!')
+                        log('选择mbn文件')
+                        mbn = filedialog.askopenfilename(title='请选择mbn文件',filetypes=[('mbn文件','*.mbn')])
+                        fh_loader = {True: 'xtcfh_loader.exe', False: 'fh_loader.exe'}[noneprompt.ConfirmPrompt('是否使用小天才加密fh_loader?',default_choice=False).prompt()]
+                        log('等待连接')
+                        status.update('等待连接')
+                        status.start()
+                        while True:
+                            if adb.is_connect():
+                                adb.adb('reboot edl')
+                                break
+                            if tools.check_edl():
+                                break
+                            sleep(0.5)
+                        port = tools.wait_for_edl()
+                        qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,mbn)
+                        with open('tmp/misc.bin','w') as f:
+                            f.write('ffbm-02')
+                        
+                        log('进入sahara模式')
+                        status.update('进入sahara模式')
+                        tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
+
+                        log('刷入misc')
+                        status.update('刷入misc')
+                        tools.iferror(qt.write_partition('tmp/misc.bin','misc'),'刷入misc',status,mode='stop')
+
+                        log('退出9008模式')
+                        status.update('退出9008模式')
+                        tools.iferror(qt.exit9008(),'退出9008模式',status,mode='stop')
+
+                        status.stop()
+                        log('已进入qmmi模式,请耐心等待开机!')
+                        input('按回车返回工具箱界面')
 
         case '4.关于':
             os.system('cls')
