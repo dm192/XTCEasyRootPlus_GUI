@@ -79,7 +79,7 @@ if not os.path.exists('driver'):
     log('初次使用,自动安装驱动!')
     status.update('安装驱动')
     log('安装Qualcomm驱动')
-    os.system('bin\\qualcommdriver.msi /quiet')
+    tools.run_wait('pnputil /i /a bin/qualcommdriver/*.inf')
     log('安装Fastboot驱动')
     tools.run_wait('pnputil /i /a bin/fastbootdriver/*.inf')
     log('安装驱动完毕!')
