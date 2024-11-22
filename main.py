@@ -1,21 +1,18 @@
 import os
 from rich.console import Console
-from rich.text import Text
 from time import sleep
-import wget
 import json
-import urllib.error
 import tools
 import subprocess
 import sys
-import zipfile
 import noneprompt
 import requests
 from rich.console import Console
-from rich.table import Column,Table
+from rich.table import Table
 import shutil
 import threading
 from tkinter import filedialog
+import traceback
 
 version = [1,6]
 
@@ -1167,5 +1164,5 @@ try:
                 input('\n按回车回到主界面......')
 
 except Exception as e:
+    tools.logging(traceback.format_exc())
     raise(e)
-    tools.logging(e)
