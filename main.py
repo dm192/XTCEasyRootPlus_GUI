@@ -649,7 +649,7 @@ try:
 
                     log('安装修改版桌面')
                     status.update('安装修改版桌面')
-                    tools.iferror(adb.install(f'tmp/{launcher}.apk'),'安装修改版桌面',status,mode='stop')
+                    tools.iferror(adb.install(f'tmp/{launcher}'),'安装修改版桌面',status,mode='stop')
 
                     log('安装软件')
                     status.update('安装软件')
