@@ -17,7 +17,7 @@ import shutil
 import threading
 from tkinter import filedialog
 
-version = [1,5]
+version = [1,6]
 
 os.system(f'title XTCEasyRootPlus v{version[0]}.{version[1]}')
 console = Console()
