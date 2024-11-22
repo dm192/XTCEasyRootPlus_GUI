@@ -189,7 +189,7 @@ try:
                         choice = noneprompt.ListPrompt('请选择桌面版本(若不知道怎么选择直接选第一项即可)',choices,default_select=1).prompt().name
                         launcher = launchers[choice]
                     else:
-                        launcher = launchers.values()[0]
+                        launcher = list(launchers.values())[0]
 
                 status.stop()
 
