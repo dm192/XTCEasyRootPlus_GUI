@@ -152,7 +152,7 @@ class ADB():
         for i in args:
             argsstr = argsstr + '-' + i + ' '
         while True:
-            output = self.adb(f'install {argsstr}{path}')
+            output = self.adb(f'install {argsstr}"{path}"')
             if 'Success' in output:
                 break
             elif 'Broken pipe' in output:
@@ -172,12 +172,18 @@ class ADB():
         else:
             return False
     def push(self,input,path):
-        self.adb(f'push {input} {path}')
+        self.adb(f'push "{input}" "{path}"')
     def install_module(self,path):
         self.push(path,'/sdcard/temp_module.zip')
         self.shell('"echo -e \'chmod 777 /data/adb/magisk/busybox\\nDATABIN=\\"/data/adb/magisk\\"\\nBBPATH=\\"/data/adb/magisk/busybox\\"\\nUTIL_FUNCTIONS_SH=\\"$DATABIN/util_functions.sh\\"\\nexport OUTFD=1\\nexport ZIPFILE=\\"/sdcard/temp_module.zip\\"\\nexport ASH_STANDALONE=1\\n\\"$BBPATH\\" sh -c \\". \\\\\\"$UTIL_FUNCTIONS_SH\\\\\\"; install_module\\"\' > /sdcard/temp_module_installer.sh"')
-        self.shell(r'su -c "sh /sdcard/temp_module_installer.sh"')
+        output = self.shell(r'su -c "sh /sdcard/temp_module_installer.sh"')
         self.shell('rm -rf /sdcard/temp_module.zip')
+        return output
+    def install_module_new(self,path):
+        self.push(path,'/sdcard/temp_module.zip')
+        output = self.shell('su -c magisk --install-module /sdcard/temp_module.zip')
+        self.shell('rm -rf /sdcard/temp_module.zip')
+        return output
     def wait_for_complete(self,sleep_time=0.5):
         while True:
             output = self.shell('getprop sys.boot_completed')
