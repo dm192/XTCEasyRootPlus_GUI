@@ -196,7 +196,7 @@ try:
                 def download_all_files():
                     if android_version == '7.1':
                         filelist = ['appstore.apk','moyeinstaller.apk','xtctoolbox.apk','filemanager.apk','notice.apk','toolkit.apk',launcher,'xws.apk','wxzf.apk']
-                        for i in fileli  st:
+                        for i in filelist:
                             tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}',f'tmp/{i}',progress=False)
                     elif android_version == '8.1':
                         filelist = ['appstore.apk','notice.apk','wxzf.apk','wcp2.apk','datacenter.apk','xws.apk',launcher,'11605.apk','filemanager.apk','settings.apk']
@@ -910,6 +910,7 @@ try:
                                     status.stop()
                                     tools.download_file('https://cn-nb1.rains3.com/xtceasyrootplus/caremeospro.zip','tmp/caremeospro.zip')
                                     log('开始安装')
+                                    log('提示:安装CaremeOSPro可能需要耗费较长的时间,请耐心等待')
                                     status.update('安装CaremeOSPro')
                                     status.start()
                                     adb.push('tmp/caremeospro.zip','/sdcard/caremeospro.zip')
