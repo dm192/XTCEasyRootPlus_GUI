@@ -648,6 +648,13 @@ try:
                     status.update('安装修改版桌面')
                     tools.iferror(adb.install(f'tmp/{launcher}'),'安装修改版桌面',status,mode='stop')
 
+                    log('重启设备')
+                    status.update('等待连接')
+                    if adb.is_cnnect():
+                        adb.adb('reboot')
+                    adb.wait_for_connect()
+                    adb.wait_for_complete()
+
                     log('安装软件')
                     status.update('安装软件')
                     for i in ['notice.apk','wxzf.apk','appstore.apk','wcp2.apk','datacenter.apk','xws.apk','filemanager.apk','settings.apk']:
@@ -657,12 +664,6 @@ try:
                     log('设置DPI为320')
                     status.update('设置DPI')
                     adb.shell('wm density 320')
-
-                    log('重启设备')
-                    status.update('等待连接')
-                    adb.adb('reboot')
-                    adb.wait_for_connect()
-                    adb.wait_for_complete()
 
                     log('连接成功!')
                     status.stop()
