@@ -687,14 +687,8 @@ def is_v3(model: str,version: str):
         'Z9': '3.0.2',
         'Z8A': '1.3.0'
     }
-    version = version.split('.')
-    dpi = True
-    for x,y in enumerate(version):
-        if int(y) <= int(versions[model].split('.')[x]) and x == len(version)-1:
-            dpi = False
-        elif int(y) < int(versions[model].split('.')[x]):
-            dpi = False
-    return dpi
+    version = int(version.replace('.',''))
+    return version >= int(versions[model].replace('.',''))
 
 class FASTBOOT:
     def __init__(self,path):
