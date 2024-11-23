@@ -12,24 +12,22 @@ import zipfile
 import os
 import re
 import shutil
-import rich
 import rich.status
 from patch_boot import patch
 
 
 
-class log():
+class Log:
     def __init__(self):
         if not os.path.exists('logs/'):
             os.mkdir('logs')
-        localtime = time.localtime(time.time())
         self.logname = f'logs/{time.strftime("%Y_%m_%d_%H-%M-%S", time.localtime())}.log'
     def run_wait(self,args: str,returncode=False):
-        '''
+        """
         运行一个程序并等待
         args: string;command line
         return
-        '''
+        """
         with open(self.logname,'a') as f:
             f.write(f'>>>{args}\n')
         p = subprocess.run(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=False)
@@ -53,7 +51,7 @@ class log():
         with open(self.logname,'a') as f:
             f.write(f'log>{log}\n\n')
 
-_log = log()
+_log = Log()
 run_wait = _log.run_wait
 logging = _log.logging
 
@@ -116,7 +114,7 @@ def print_logo(version):
     logo = logo+f'[/#01BFEE][blue]v{version[0]}.{version[1]}[/blue]'
     print(logo)
 
-class ADB():
+class ADB:
     def __init__(self,path) -> None:
         self.path = path
     def adb(self,input):
@@ -138,12 +136,10 @@ class ADB():
     def get_version_of_system(self):
         return self.adb('shell getprop ro.product.current.softversion').replace('\n','').replace('\r','')
     def get_info(self):
-        output = {}
-        output['innermodel'] = self.get_innermodel()
-        output['model'] = self.get_model()
-        output['version_of_android'] = self.get_version_of_android()
-        output['version_of_system'] = self.get_version_of_system()
-        output['version_of_android_from_sdk'] = self.get_version_of_android_from_sdk()
+        output = {'innermodel': self.get_innermodel(), 'model': self.get_model(),
+                  'version_of_android': self.get_version_of_android(),
+                  'version_of_system': self.get_version_of_system(),
+                  'version_of_android_from_sdk': self.get_version_of_android_from_sdk()}
         return output
     def get_plmnstatus(self):
         return self.adb('shell getprop gsm.xtcplmn.plmnstatus')
@@ -254,7 +250,7 @@ def print_error(title,content):
     table.add_row(content)
     print(table)
 
-class QT():
+class QT:
     def __init__(self,qsspath,fhlpath,port,mbn,emmcdlpath='bin/emmcdl.exe') -> None:
         self.qsspath = qsspath
         self.fhlpath = fhlpath
@@ -374,12 +370,12 @@ class QT():
 
         return output
     def read_partitions(self,partitions: list,output: str = None):
-        '''
+        """
         {
             'name': {'start': start, 'size': size},
             'name': {'start': start, 'size': size},
         }
-        '''
+        """
         if not output is None:
             if not os.path.exists(output):
                 os.mkdir(output)
@@ -425,16 +421,16 @@ class QT():
         return output
     
     def write_partitions(self,partitions: list):
-        '''
+        """
         {
             'name': {'file': filepath, 'start': start, 'size': size},
             'name': {'file': filepath, 'start': start, 'size': size},
         }
-        '''
+        """
         for i in partitions:
-            output = self.write_partition(i)
+            output = self.write_partition(partitions[i]['file'],i)
             if not output == 'success':
-                print_error(f'读取分区{i}失败',output)
+                print_error(f'写入分区{i}失败',output)
                 input()
                 break
 
@@ -470,7 +466,7 @@ def extract_all(zip_path,extract_path):
 def easy_patch_boot():
     pass
 
-class MAGISKBOOT():
+class MAGISKBOOT:
     def __init__(self,path):
         self.path = path
     def magiskboot(self,args):
@@ -540,7 +536,7 @@ def patch_boot(
             raise FileNotFoundError('Cannot found util_functions.sh in zip!')
 
     #解包boot
-    console.log('解包boot')
+    console.Log('解包boot')
     magiskboot(f'unpack -h {input_path}')
     tmpfile += ['kernel','kernel_dtb','ramdisk.cpio','header']
 
@@ -564,7 +560,7 @@ def patch_boot(
         tmpfile.append('ramdisk.cpio.orig')
 
     #修补ramdisk.cpio
-        console.log('修补ramdisk.cpio')
+        console.Log('修补ramdisk.cpio')
     with open('config','w',newline='\n') as f:
         if magisk_vercode == '20400':
             f.write(f'''KEEPVERITY={options['keep_verity']}
@@ -589,11 +585,11 @@ SHA1={sha1}''')
         magiskboot(r'cpio ramdisk.cpio "add 0750 init magiskinit" "mkdir 0750 overlay.d" "mkdir 0750 overlay.d/sbin" "add 0644 overlay.d/sbin/magisk32.xz magisk32.xz" "patch" "backup ramdisk.cpio.orig" "mkdir 000 .backup" "add 000 .backup/.magisk config" "add 0750 sbin/adbd 810_adbd"')
 
     #修补dtb
-    console.log('修补dtb')
+    console.Log('修补dtb')
     magiskboot('dtb kernel_dtb patch')
 
     #修补kernel
-    console.log('修补kernel')
+    console.Log('修补kernel')
     magiskboot('hexpatch kernel 49010054011440B93FA00F71E9000054010840B93FA00F7189000054001840B91FA00F7188010054 A1020054011440B93FA00F7140020054010840B93FA00F71E0010054001840B91FA00F7181010054') #尝试修补kernel-移除三星RKP
     magiskboot('hexpatch kernel 821B8012 E2FF8F12') #尝试修补kernel-移除三星defex
     if options['rootfs']:
@@ -604,7 +600,7 @@ SHA1={sha1}''')
     patch()
     
     #打包boot
-    console.log('打包boot')
+    console.Log('打包boot')
     magiskboot(f'repack {input_path} boot_new.img')
     shutil.copy('boot_new.img',output_path)
     tmpfile.append('boot_new.img')
@@ -700,7 +696,7 @@ def is_v3(model: str,version: str):
             dpi = False
     return dpi
 
-class FASTBOOT():
+class FASTBOOT:
     def __init__(self,path):
         self.path = path
     def fastboot(self,args):

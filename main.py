@@ -1,5 +1,4 @@
 import os
-from rich.console import Console
 from time import sleep
 import json
 import tools
@@ -21,15 +20,15 @@ console = Console()
 status = console.status('')
 print = console.print
 
-class logging():
-    def __init__(self,console: Console,logging: tools.log.logging):
+class Logging:
+    def __init__(self, console: Console, logging: tools.Log.logging):
         self.logging = logging
         self.console = console
     def log(self,log):
         self.console.log(log)
         self.logging(log)
 
-log = logging(console,tools.logging).log
+log = Logging(console, tools.logging).log
 
 if not os.path.exists('tmp/'):
     os.mkdir('tmp')
@@ -418,7 +417,7 @@ try:
                     log('连接成功!')
                     status.update('安装改版桌面')
                     log('开始安装改版系统桌面')
-                    tools.iferror(adb.install(f'tmp/{launcher}'),f'安装{i}',status,mode='stop')
+                    tools.iferror(adb.install(f'tmp/{launcher}'),f'安装{launcher}',status,mode='stop')
 
                     status.update('等待重新连接')
                     log('重启手表')
@@ -650,7 +649,7 @@ try:
 
                     log('重启设备')
                     status.update('等待连接')
-                    if adb.is_cnnect():
+                    if adb.is_connect():
                         adb.adb('reboot')
                     adb.wait_for_connect()
                     adb.wait_for_complete()
@@ -684,7 +683,7 @@ try:
                     info = adb.get_info()
                     model = tools.xtc_models[info['innermodel']]
                     log('获取成功')
-                    status.stop
+                    status.stop()
                 else:
                     log('获取失败,进入手动选择')
                     status.stop()
@@ -1037,7 +1036,7 @@ try:
                                         output = qt.read_partition(i)
                                         if not output == 'success':
                                             status.stop()
-                                            tools.print_error(f'读取{i}失败!')
+                                            tools.print_error(f'读取{i}失败!',output)
                                             qt.exit9008()
                                             input()
                                             break
@@ -1166,4 +1165,4 @@ try:
 
 except Exception as e:
     tools.logging(traceback.format_exc())
-    raise(e)
+    raise e
