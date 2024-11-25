@@ -472,8 +472,8 @@ try:
                         log('刷入boot')
                         status.update('刷入boot') 
                         tools.iferror(qt.write_partition('tmp/boot_new.img','boot'),'刷入boot',status,mode='exit9008',qt=qt)
-                    log('刷入boot,aboot,userdata,misc')
-                    status.update('刷入boot,aboot,userdata,misc') 
+                    log('刷入aboot,recovery')
+                    status.update('刷入aboot,recovery')
                     tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --memoryname=emmc --search_path=data/{model}/ --sendxml=data/{model}/rawprogram0.xml --noprompt'),'刷入rawprogram',status,mode='stop')
                     log('刷入成功!')
                     if not model in ('Z7A','Z6_DFB') and is_v3:
