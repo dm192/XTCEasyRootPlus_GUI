@@ -13,7 +13,7 @@ import threading
 from tkinter import filedialog
 import traceback
 
-version = [1,6]
+version = [1,7]
 
 os.system(f'title XTCEasyRootPlus v{version[0]}.{version[1]}')
 console = Console()
