@@ -478,7 +478,7 @@ def patch_boot(
         input_path: str,
         magisk_path: str,
         output_path: str,
-        console: rich.console,
+        log,
         options={
             'keep_verity':True,
             'keep_force_encrypt':True,
@@ -536,7 +536,7 @@ def patch_boot(
             raise FileNotFoundError('Cannot found util_functions.sh in zip!')
 
     #解包boot
-    console.Log('解包boot')
+    log('解包boot')
     magiskboot(f'unpack -h {input_path}')
     tmpfile += ['kernel','kernel_dtb','ramdisk.cpio','header']
 
@@ -560,7 +560,7 @@ def patch_boot(
         tmpfile.append('ramdisk.cpio.orig')
 
     #修补ramdisk.cpio
-        console.Log('修补ramdisk.cpio')
+        log('修补ramdisk.cpio')
     with open('config','w',newline='\n') as f:
         if magisk_vercode == '20400':
             f.write(f'''KEEPVERITY={options['keep_verity']}
@@ -585,11 +585,11 @@ SHA1={sha1}''')
         magiskboot(r'cpio ramdisk.cpio "add 0750 init magiskinit" "mkdir 0750 overlay.d" "mkdir 0750 overlay.d/sbin" "add 0644 overlay.d/sbin/magisk32.xz magisk32.xz" "patch" "backup ramdisk.cpio.orig" "mkdir 000 .backup" "add 000 .backup/.magisk config" "add 0750 sbin/adbd 810_adbd"')
 
     #修补dtb
-    console.Log('修补dtb')
+    log('修补dtb')
     magiskboot('dtb kernel_dtb patch')
 
     #修补kernel
-    console.Log('修补kernel')
+    log('修补kernel')
     magiskboot('hexpatch kernel 49010054011440B93FA00F71E9000054010840B93FA00F7189000054001840B91FA00F7188010054 A1020054011440B93FA00F7140020054010840B93FA00F71E0010054001840B91FA00F7181010054') #尝试修补kernel-移除三星RKP
     magiskboot('hexpatch kernel 821B8012 E2FF8F12') #尝试修补kernel-移除三星defex
     if options['rootfs']:
@@ -600,7 +600,7 @@ SHA1={sha1}''')
     patch()
     
     #打包boot
-    console.Log('打包boot')
+    log('打包boot')
     magiskboot(f'repack {input_path} boot_new.img')
     shutil.copy('boot_new.img',output_path)
     tmpfile.append('boot_new.img')

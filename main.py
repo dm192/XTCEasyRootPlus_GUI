@@ -258,7 +258,7 @@ try:
 
                     log('开始修补boot分区')
                     status.update('修补boot分区')
-                    tools.patch_boot('bin/magiskboot.exe','tmp/boot.img','bin/20400.zip','tmp/',console)
+                    tools.patch_boot('bin/magiskboot.exe','tmp/boot.img','bin/20400.zip','tmp/',log)
                     log('修补完毕')
 
                     if mode == 'boot':
@@ -461,7 +461,7 @@ try:
 
                     log('开始修补boot分区')
                     status.update('修补boot分区') 
-                    tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.apk','tmp/',console)
+                    tools.patch_boot('bin/magiskboot.exe','tmp/boot.img',f'bin/{magisk}.apk','tmp/',log)
 
                     log('修补完毕')
                     if model in ('Z7A','Z6_DFB'):
