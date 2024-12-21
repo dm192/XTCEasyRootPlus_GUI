@@ -79,7 +79,7 @@ try:  # 尝试获取版本文件
             tools.exit_after_enter()
     latest_version = read
     logging.debug(f'最新版本:{latest_version[0]}.{latest_version[1]}')
-    if latest_version[0] >= version[0] and latest_version[1] > version[1]:
+    if ((latest_version[0] >= version[0] and latest_version[1] > version[1]) if not len(version) >= 3 and version[2] == 'b' else (latest_version[0] >= version[0] and latest_version[1] >= version[1])):
         logging.info(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
         logging.info('开始下载新版本......')
         status.stop()
