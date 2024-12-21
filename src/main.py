@@ -161,8 +161,7 @@ while True:
             table.add_column("代号")
             table.add_column("系统版本", justify="right")
             table.add_column("安卓版本", justify="right")
-            table.add_row(model, info['innermodel'],
-                          info['version_of_system'], android_version)
+            table.add_row(model, info['innermodel'], info['version_of_system'], android_version)
             print(table)
             status.stop()
             if not info['innermodel'] in tools.xtc_models.keys():
@@ -180,6 +179,17 @@ while True:
                 logging.error('不支持的机型')
                 print('不支持的机型!')
                 break
+
+            is_v3 : bool = True
+            is_v3_encrypt: bool = True
+            if android_version == '8.1':
+                is_v3: bool = tools.is_v3(model, info['version_of_system'])
+                """
+                is_v3_encrypt = tools.is_v3_encrypt(model, info['version_of_system'])
+                logging.debug(f'是否为V3加密版本: {'是' if is_v3_encrypt else '不是'}')
+                """
+                logging.debug(f'是否为V3: {'是' if is_v3 else '不是'}')
+                logging.debug(f'是否是孤儿机型: {'是' if model in ('Z7A', 'Z6_DFB') else '不是'}')
 
             if android_version == '8.1':
                 logging.debug('选择Magisk版本')
@@ -219,50 +229,59 @@ while True:
                     tools.download_file(
                         'https://cn-nb1.rains3.com/xtceasyrootplus/2userdata.img', 'tmp/userdata.img')
 
-            logging.debug('获取桌面版本列表')
-            with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/launchers.json') as r:
-                read = r.content
-                try:
-                    if android_version == '7.1':
-                        launchers: dict[str, str] = json.loads(r.content)[
-                            '711']
-                    else:
-                        launchers: dict[str, str] = json.loads(r.content)[
-                            '810']
-                except json.decoder.JSONDecodeError:
-                    status.stop()
-                    tools.logging_traceback('获取桌面版本列表失败:JSON无法解码')
-                    print('获取桌面版本列表失败!')
-                    tools.pause()
-                    break
+            if android_version == '7.1' or not is_v3: # type: ignore
+                logging.debug('获取桌面版本列表')
+                with requests.get('https://cn-nb1.rains3.com/xtceasyrootplus/launchers.json') as r:
+                    read = r.content
+                    try:
+                        if android_version == '7.1':
+                            launchers: dict[str, str] = json.loads(r.content)['711']
+                        else:
+                            launchers: dict[str, str] = json.loads(r.content)['810']
+                    except json.decoder.JSONDecodeError:
+                        status.stop()
+                        tools.logging_traceback('获取桌面版本列表失败:JSON无法解码')
+                        print('获取桌面版本列表失败!')
+                        tools.pause()
+                        break
 
-                if not len(launchers) == 1:
-                    choices: list[noneprompt.Choice[None]] = []
-                    for i in list(launchers.keys()):
-                        choices.append(noneprompt.Choice(i))
-                    choice = noneprompt.ListPrompt(
-                        '请选择桌面版本(若不知道怎么选择直接选第一项即可)', choices, default_select=1).prompt().name
-                    launcher = launchers[choice]
-                else:
-                    launcher = list(launchers.values())[0]
+                    if not len(launchers) == 1:
+                        choices: list[noneprompt.Choice[None]] = []
+                        for i in list(launchers.keys()):
+                            choices.append(noneprompt.Choice(i))
+                        status.stop()
+                        choice = noneprompt.ListPrompt('请选择桌面版本(若不知道怎么选择直接选第一项即可)', choices, default_select=1).prompt().name
+                        status.start()
+                        launcher = launchers[choice]
+                    else:
+                        launcher = list(launchers.values())[0]
+            else:
+                logging.warning('V3默认使用121750桌面')
+                launcher = '121750.apk'
+            
+            doze: bool = True
+            if android_version == '8.1':
+                choice = noneprompt.ConfirmPrompt('是否要需要禁用模式切换').prompt()
+                launcher = launcher[:-4]+('_A' if choice else '_B')+launcher[-4:]
+                if launcher[0:2] == '12':
+                    choice = noneprompt.ConfirmPrompt('12版本桌面较为耗电,是否刷入Doze模块尝试优化耗电?').prompt()
+                    doze = choice
 
             status.stop()
 
             def download_all_files():
                 if android_version == '7.1':
-                    filelist = ['appstore.apk', 'moyeinstaller.apk', 'xtctoolbox.apk',
-                                'filemanager.apk', 'notice.apk', 'toolkit.apk', launcher, 'xws.apk', 'wxzf.apk']
+                    filelist = ['appstore.apk', 'moyeinstaller.apk', 'xtctoolbox.apk','filemanager.apk', 'notice.apk', 'toolkit.apk', launcher, 'xws.apk', 'wxzf.apk']
                     for i in filelist:
                         tools.download_file(
                             f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
                 elif android_version == '8.1':
-                    filelist = ['appstore.apk', 'notice.apk', 'wxzf.apk', 'wcp2.apk', 'datacenter.apk',
-                                'xws.apk', launcher, '11605.apk', 'filemanager.apk', 'settings.apk']
+                    filelist = ['appstore.apk', 'notice.apk', 'wxzf.apk', 'wcp2.apk', 'datacenter.apk','xws.apk', launcher, '11605.apk', 'filemanager.apk', 'settings.apk', 'systemplus.apk', 'moyeinstaller.apk']
                     for i in filelist:
-                        tools.download_file(
-                            f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
-                    tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch/{
-                                        model}.zip', 'tmp/xtcpatch.zip', progress_enable=False)
+                        tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
+                    tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch.zip', 'tmp/xtcpatch.zip', progress_enable=False)
+                    if doze:
+                        tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/doze.zip', 'tmp/xtcpatch.zip', progress_enable=False)
 
             download_thread = threading.Thread(target=download_all_files)
             download_thread.start()
@@ -466,13 +485,11 @@ while True:
                 adb.push('tmp/notice.apk', '/sdcard/notice.apk')
                 if not adb.is_screen_alive():
                     adb.shell('input keyevent 26')
-                adb.shell(
-                    'am start -a android.intent.action.VIEW -d file:///sdcard/notice.apk -t application/vnd.android.package-archive')
+                adb.shell('am start -a android.intent.action.VIEW -d file:///sdcard/notice.apk -t application/vnd.android.package-archive')
 
                 status.stop()
                 console.rule('接下来需要你对手表进行一些手动操作', characters='=')
-                print(
-                    '现在你的手表上出现了一个白色的"打开方式"对话框,请往下滑选择"使用弦安装器"并点击始终按钮;点击始终按钮后会弹出安装notice的对话框,点击取消即可')
+                print('现在你的手表上出现了一个白色的"打开方式"对话框,请往下滑选择"使用弦安装器"并点击始终按钮;点击始终按钮后会弹出安装notice的对话框,点击取消即可')
                 input('如果你已经进入主界面,请按回车继续')
                 console.rule('', characters='=')
                 status.start()
@@ -646,6 +663,7 @@ while True:
                 logging.info('连接成功!')
                 status.update('安装改版桌面')
                 logging.info('开始安装改版系统桌面')
+                logging.warning()
                 adb.install(f'tmp/{launcher}')
 
                 try:
@@ -681,9 +699,6 @@ while True:
                 input('恭喜你,Root成功!按回车返回主界面')
 
             elif android_version == '8.1':
-                is_v3 = tools.is_v3(model, info['version_of_system'])
-                logging.debug(f'是否为V3: {'是' if is_v3 else '不是'}')
-                logging.debug(f'是否是孤儿机型: {'是' if model in ('Z7A', 'Z6_DFB') else '不是'}')
                 status.update('等待连接')
                 status.start()
                 try:
@@ -867,7 +882,15 @@ while True:
                         adb.reboot()
                         adb.wait_for_connect()
                         adb.wait_for_complete()
-                        logging.info('连接成功!')
+                    except adb.ADBError:
+                        status.stop()
+                        tools.logging_traceback('创建空文件失败')
+                        tools.print_traceback_error('创建空文件失败')
+                        tools.pause()
+                        break
+
+                if model in ('Z7A', 'Z6_DFB'):
+                    try:
                         if download_thread.is_alive():
                             logging.info('下载文件')
                             status.update('下载文件')
@@ -887,32 +910,10 @@ while True:
                         tools.pause()
                         break
 
-                if not model in ('Z7A', 'Z6_DFB'):
-                    try:
-                        status.update('等待连接')
-                        logging.info('重启进入Fastboot')
-                        adb.reboot(adb.RebootMode.bootloader)
-                        fastboot.wait_for_fastboot()
-                        status.update('擦除misc')
-                        logging.info('擦除misc')
-                        fastboot.erase('misc')
-                        status.update('等待重新连接')
-                        logging.info('刷入完毕,重启进入系统')
-                        logging.info(
-                            '提示:若已进入系统但仍然卡在这里,请打开拨号盘输入"*#0769651#*"手动开启adb')
-                        fastboot.reboot()
-                        adb.wait_for_connect()
-                        adb.wait_for_complete()
-                    except tools.RunProgramException:
-                        status.stop()
-                        tools.logging_traceback('擦除misc失败')
-                        tools.print_traceback_error('擦除misc失败')
-                        tools.pause()
-                        break
-
                 # choice = noneprompt.ListPrompt('现在您的手表处于什么状态?',choices=[noneprompt.Choice('1.已正常开机'),noneprompt.Choice('2.仍处于黑屏状态')]).prompt()
                 # if choice.name == '2.仍处于黑屏状态':
                 #     pass
+
                 try:
                     logging.info('开启充电可用')
                     status.update('开启充电可用')
@@ -930,44 +931,91 @@ while True:
 
                 console.rule('接下来需要你进行一些手动操作', characters='=')
                 print('请完成激活向导,当提示绑定时直接右滑退出,完成开机向导,进入主界面')
-                print('提示:请不要断开手表与电脑的连接!')
-                print('提示:如果提示系统已被Root不用在意,没事的,点击我知道了就行')
+                if model in ('Z7A', 'Z6_DFB'):
+                    print('提示:请不要断开手表与电脑的连接!')
+                    print('提示:如果提示系统已被Root不用在意,没事的,点击我知道了就行')
                 input('如果你已经进入主界面,请按回车进行下一步')
                 console.rule('', characters='=')
 
+                # try:
+                #     status.update('设置DPI')
+                #     status.start()
+                #     logging.info('设置DPI为200')
+                #     adb.shell('wm density 200')
+                #     logging.info('检测桌面是否崩溃')
+                #     status.update('检测桌面是否崩溃')
+                #     sleep(5)
+                #     if not 'com.xtc.i3launcher' in adb.get_activity():
+                #         logging.info('检测到桌面崩溃!设置DPI为280')
+                #         status.update('设置DPI')
+                #         adb.shell('wm density 280')
+                #         logging.info('请点击屏幕上的"重新打开应用"')
+                #         status.update('等待点击')
+                #         while True:
+                #             if 'com.xtc.i3launcher' in adb.get_activity():
+                #                 break
+                #             sleep(0.5)
+                # except adb.ADBError:
+                #     status.stop()
+                #     tools.logging_traceback('设置DPI失败')
+                #     tools.print_traceback_error('设置DPI失败')
+                #     tools.pause()
+                #     break
+
                 try:
-                    status.update('设置DPI')
-                    status.start()
-                    logging.info('设置DPI为200')
+                    logging.info('设置Magisk')
+                    status.update('设置Magisk')
+                    adb.shell('svc wifi disable')
                     adb.shell('wm density 200')
-                    logging.info('检测桌面是否崩溃')
-                    status.update('检测桌面是否崩溃')
-                    sleep(5)
-                    if not 'com.xtc.i3launcher' in adb.get_activity():
-                        logging.info('检测到桌面崩溃!设置DPI为280')
-                        status.update('设置DPI')
-                        adb.shell('wm density 280')
-                        logging.info('请点击屏幕上的"重新打开应用"')
-                        status.update('等待点击')
-                        while True:
-                            if 'com.xtc.i3launcher' in adb.get_activity():
-                                break
-                            sleep(0.5)
+                    adb.shell('am start -n com.topjohnwu.magisk/.ui.MainActivity')
+                    adb.shell('am start -n io.github.huskydg.magisk/com.topjohnwu.magisk.ui.MainActivity')
                 except adb.ADBError:
                     status.stop()
-                    tools.logging_traceback('设置DPI失败')
-                    tools.print_traceback_error('设置DPI失败')
+                    tools.logging_traceback('设置Magisk失败')
+                    tools.print_traceback_error('设置Magisk失败')
+                    tools.pause()
+                    break
+                    
+                status.stop()
+                console.rule('接下来需要你进行一些手动操作', characters='=')
+                input('请点击右上角设置,往下滑找到自动响应,将其设置为"允许";然后找到"超级用户通知",将其设置为"无",完成后按下回车继续')
+                console.rule('', characters='=')
+                status.start()
+
+                try:
+                    status.update('设置Edxposed')
+                    logging.info('设置Edxposed')
+                    adb.shell('am start -n com.solohsu.android.edxp.manager/de.robv.android.xposed.installer.WelcomeActivity')
+                    sleep(5)
+                    adb.shell('am force-stop com.solohsu.android.edxp.manager')
+                except adb.ADBError:
+                    status.stop()
+                    tools.logging_traceback('设置Edxposed失败')
+                    tools.print_traceback_error('设置Edxposed失败')
+                    tools.pause()
+                    break
+
+                if download_thread.is_alive():
+                    logging.info('下载文件')
+                    status.update('下载文件')
+                    download_thread.join()
+
+                try:
+                    status.update('安装SystemPlus')
+                    logging.info('安装SystemPlus')
+                    adb.install('tmp/systemplus.apk')
+                except adb.ADBError:
+                    status.stop()
+                    tools.logging_traceback('安装SystemPlus失败')
+                    tools.print_traceback_error('安装SystemPlus失败')
                     tools.pause()
                     break
 
                 status.stop()
                 console.rule('接下来需要你进行一些手动操作', characters='=')
-                input(
-                    '请打开手表上的"Magisk"或"MagiskDelta"APP,点击右上角设置,往下滑找到自动响应,将其设置为"允许";然后找到"超级用户通知",将其设置为"无",完成后按下回车继续')
-                input('请打开手表上的"Edxposed Installer"APP,然后直接返回退出,完成后按下回车继续')
-                input(
-                    '请打开手表上的"SystemPlus"APP,滑到最下面点击"自激活",依次点击"激活SystemPlus"和"激活核心破解"按钮,完成后按下回车继续')
+                input('请滑到界面底部点击"自激活",依次点击"激活SystemPlus"和"激活核心破解"按钮,完成后按下回车继续')
                 console.rule('', characters='=')
+                status.start()
 
                 try:
                     adb.push('bin/systemplus.sh', '/sdcard/')
@@ -1043,12 +1091,6 @@ while True:
                     tools.pause()
                     break
 
-
-                if download_thread.is_alive():
-                    logging.info('下载文件')
-                    status.update('下载文件')
-                    download_thread.join()
-
                 try:
                     logging.info('安装XTCPatch')
                     status.update('安装XTCPatch')
@@ -1057,6 +1099,21 @@ while True:
                     status.stop()
                     tools.logging_traceback('安装XTCPatch失败')
                     tools.print_traceback_error('安装XTCPatch失败')
+                    tools.pause()
+                    break
+
+                try:
+                    logging.info('安装必备应用')
+                    status.update('安装必备应用')
+                    adb.shell('wm density 320')
+                    adb.shell('pm clear com.android.packageinstaller')
+                    for i in ['appstore.apk', 'notice.apk', 'wxzf.apk', 'wcp2.apk', 'datacenter.apk','xws.apk', 'filemanager.apk', 'settings.apk', 'moyeinstaller.apk']:
+                        logging.info(f'安装{i}')
+                        adb.install(f'tmp/{i}')
+                except adb.ADBError:
+                    status.stop()
+                    tools.logging_traceback('安装必备应用失败')
+                    tools.print_traceback_error('安装必备应用失败')
                     tools.pause()
                     break
 
@@ -1086,22 +1143,69 @@ while True:
                 adb.wait_for_connect()
                 adb.wait_for_complete()
 
+                if not model in ('Z7A', 'Z6_DFB'):
+                    try:
+                        logging.info('重启进入Fastboot')
+                        status.update('重启进入Fastboot')
+                        adb.reboot(adb.RebootMode.bootloader)
+                        fastboot.wait_for_fastboot()
+                        status.update('擦除misc')
+                        logging.info('擦除misc')
+                        fastboot.erase('misc')
+                        status.update('等待重新连接')
+                        logging.info('刷入完毕,重启进入系统')
+                        logging.info('提示:若已进入系统但仍然卡在这里,请打开拨号盘输入"*#0769651#*"手动开启adb')
+                        fastboot.reboot()
+                        adb.wait_for_connect()
+                        adb.wait_for_complete()
+                    except tools.RunProgramException:
+                        status.stop()
+                        tools.logging_traceback('擦除misc失败')
+                        tools.print_traceback_error('擦除misc失败')
+                        tools.pause()
+                        break
+
                 try:
-                    logging.info('安装软件')
-                    status.update('安装软件')
-                    for i in ['notice.apk', 'wxzf.apk', 'appstore.apk', 'wcp2.apk', 'datacenter.apk', 'xws.apk', 'filemanager.apk', 'settings.apk']:
-                        logging.info(f'安装{i}')
-                        adb.install(f'tmp/{i}')
+                    logging.info('设置弦-安装器')
+                    status.update('设置弦-安装器')
+                    while True:
+                        if not adb.is_screen_alive():
+                            adb.shell('input keyevent 26')
+                            sleep(1)
+                        if 'com.xtc.i3launcher' in adb.get_activity():
+                            break
+                        sleep(1)
+                    adb.shell('am start -a android.intent.action.VIEW -d file:///sdcard/notice.apk -t application/vnd.android.package-archive')
                 except adb.ADBError:
                     status.stop()
-                    tools.logging_traceback('安装必备软件失败')
-                    tools.print_traceback_error('安装必备软件失败')
+                    tools.logging_traceback('设置弦-安装器失败')
+                    tools.print_traceback_error('设置弦-安装器失败')
                     tools.pause()
                     break
 
-                logging.info('设置DPI为320')
-                status.update('设置DPI')
-                adb.shell('wm density 320')
+                status.stop()
+                console.rule('接下来需要你对手表进行一些手动操作', characters='=')
+                print('现在你的手表上出现了一个白色的"打开方式"对话框,请往下滑选择"使用弦安装器"并点击始终按钮;点击始终按钮后会弹出安装notice的对话框,点击取消即可')
+                input('如果你已经进入主界面,请按回车继续')
+                console.rule('', characters='=')
+                status.start()
+
+                if doze:
+                    try:
+                        logging.info('安装doze模块')
+                        status.update('安装doze模块')
+                        adb.install_module_new('tmp/doze.zip')
+                        logging.info('重启设备')
+                        status.update('等待重新连接')
+                        adb.reboot()
+                        adb.wait_for_connect()
+                        adb.wait_for_complete()
+                    except adb.ADBError:
+                        status.stop()
+                        tools.logging_traceback('安装doze模块失败')
+                        tools.print_traceback_error('安装doze模块失败')
+                        tools.pause()
+                        break
 
                 logging.info('连接成功!')
                 status.stop()
