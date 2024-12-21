@@ -276,7 +276,7 @@ while True:
                         tools.download_file(
                             f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
                 elif android_version == '8.1':
-                    filelist = ['appstore.apk', 'notice.apk', 'wxzf.apk', 'wcp2.apk', 'datacenter.apk','xws.apk', launcher, '11605.apk', 'filemanager.apk', 'settings.apk', 'systemplus.apk', 'moyeinstaller.apk']
+                    filelist = ['appstore.apk', 'notice.apk', 'wxzf.apk', 'wcp2.apk', 'datacenter.apk','xws.apk', launcher, 'filemanager.apk', 'settings.apk', 'systemplus.apk', 'moyeinstaller.apk']
                     for i in filelist:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
                     tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch.zip', 'tmp/xtcpatch.zip', progress_enable=False)
