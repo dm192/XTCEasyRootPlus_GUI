@@ -663,7 +663,6 @@ while True:
                 logging.info('连接成功!')
                 status.update('安装改版桌面')
                 logging.info('开始安装改版系统桌面')
-                logging.warning()
                 adb.install(f'tmp/{launcher}')
 
                 try:
@@ -910,10 +909,6 @@ while True:
                         tools.pause()
                         break
 
-                # choice = noneprompt.ListPrompt('现在您的手表处于什么状态?',choices=[noneprompt.Choice('1.已正常开机'),noneprompt.Choice('2.仍处于黑屏状态')]).prompt()
-                # if choice.name == '2.仍处于黑屏状态':
-                #     pass
-
                 try:
                     logging.info('开启充电可用')
                     status.update('开启充电可用')
@@ -936,31 +931,6 @@ while True:
                     print('提示:如果提示系统已被Root不用在意,没事的,点击我知道了就行')
                 input('如果你已经进入主界面,请按回车进行下一步')
                 console.rule('', characters='=')
-
-                # try:
-                #     status.update('设置DPI')
-                #     status.start()
-                #     logging.info('设置DPI为200')
-                #     adb.shell('wm density 200')
-                #     logging.info('检测桌面是否崩溃')
-                #     status.update('检测桌面是否崩溃')
-                #     sleep(5)
-                #     if not 'com.xtc.i3launcher' in adb.get_activity():
-                #         logging.info('检测到桌面崩溃!设置DPI为280')
-                #         status.update('设置DPI')
-                #         adb.shell('wm density 280')
-                #         logging.info('请点击屏幕上的"重新打开应用"')
-                #         status.update('等待点击')
-                #         while True:
-                #             if 'com.xtc.i3launcher' in adb.get_activity():
-                #                 break
-                #             sleep(0.5)
-                # except adb.ADBError:
-                #     status.stop()
-                #     tools.logging_traceback('设置DPI失败')
-                #     tools.print_traceback_error('设置DPI失败')
-                #     tools.pause()
-                #     break
 
                 try:
                     logging.info('设置Magisk')
