@@ -20,12 +20,23 @@ from modules import logging
 
 version: list[int | Literal['b']] = [2, 0, 'b', 1]
 
+if not os.path.exists('logs/'):
+    os.mkdir('logs')
+
+debug: bool = False
+
+for i in sys.argv:
+    if i == '--debug':
+        debug = True
+if len(version) >= 3 and version[2] == 'b':
+    debug = True
+
 os.system(f'title XTCEasyRootPlus v{version[0]}.{version[1]}')
 console = Console()
 status = console.status('')
 print = console.print
 
-logging.set_config(f'logs/{time.strftime("%Y_%m_%d_%H-%M-%S", time.localtime())}.log', print=console.log, level=(logging.level.debug if len(version) >= 3 and version[2] == 'b' else logging.level.info))
+logging.set_config(f'logs/{time.strftime("%Y_%m_%d_%H-%M-%S", time.localtime())}.log', print=console.log, level=(logging.level.debug if debug else logging.level.info))
 
 def global_exception_handler(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback: TracebackType):
     exc_traceback_str = '全局错误\n' + \
@@ -105,7 +116,7 @@ while True:
 
     # 主菜单
     tools.print_logo(version)
-    print(f'\nXTCEasyRootPlus [blue]v{version[0]}.{version[1]}{' beta' if len(version) >= 3 and version[2] == 'b' else ''}{f' {version[3]}' if len(version) >= 3 and version[2] == 'b' else ''}[/blue]')
+    print(f'\nXTCEasyRootPlus [blue]v{version[0]}.{version[1]}{' beta' if debug else ''}{f' {version[3]}' if debug else ''}[/blue]')
     print('本软件是[green]免费公开使用[/green]的，如果你是付费买来的请马上退款，你被骗了！\n')
     logging.debug('进入主菜单')
     choice = noneprompt.ListPrompt(
@@ -1190,8 +1201,10 @@ while True:
 
                 logging.info('进入sahara模式')
                 status.update('进入sahara模式')
-                if not qt.intosahara() == 'success':
-                    logging.info('进入sahara模式失败,可能已经进入!尝试直接超恢')
+                try:
+                    qt.intosahara()
+                except qt.QSaharaServerError:
+                    logging.warning('进入sahara模式失败,可能已经进入!尝试直接超恢')
 
                 logging.info('开始超恢')
                 logging.info('提示: 此过程耗时较长,请耐心等待')
