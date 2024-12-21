@@ -281,7 +281,7 @@ while True:
                         tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/apps/{i}', f'tmp/{i}', progress_enable=False)
                     tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/xtcpatch.zip', 'tmp/xtcpatch.zip', progress_enable=False)
                     if doze:
-                        tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/doze.zip', 'tmp/xtcpatch.zip', progress_enable=False)
+                        tools.download_file(f'https://cn-nb1.rains3.com/xtceasyrootplus/doze.zip', 'tmp/doze.zip', progress_enable=False)
 
             download_thread = threading.Thread(target=download_all_files)
             download_thread.start()
